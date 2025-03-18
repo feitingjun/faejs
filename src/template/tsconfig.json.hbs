@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@/*": [
+        "./{{srcDirRoot}}/*"
+      ],
+      "fae": [
+        "./{{srcDir}}/.fae"
+      ]
+    }
+  },
+  "include": [
+    "**/*.tsx",
+    "**/*.ts",
+    "**/*.d.ts"
+  ],
+  "exclude": ["**/node_modules/**"]
+}

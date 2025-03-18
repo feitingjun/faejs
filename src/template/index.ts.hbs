@@ -1,0 +1,45 @@
+import { useAppContext, useLoaderData } from '@faejs/app'
+export * from './types'
+export * from './define'
+import { Link, Outlet, useLocation, useMatch, useMatches, useNavigate, useNavigation, useOutlet, useOutletContext, useResolvedPath, useSearchParams, useSubmit, useParams, useRoutes, useNavigationType } from 'react-router'
+{{#each exports}}
+import {{#if this.type}}type {{/if~}} {{#isArray this.specifier~}}
+    { {{#each this.specifier}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} }
+  {{~/isArray~}}
+  {{#isString this.specifier}}{{this.specifier}}{{/isString}} from '{{this.source}}'
+{{/each}}
+
+export {
+  useAppContext,
+  useLoaderData,
+  Link,
+  Outlet,
+  useLocation,
+  useMatch,
+  useMatches,
+  useNavigate,
+  useNavigation,
+  useOutlet,
+  useOutletContext,
+  useResolvedPath,
+  useSearchParams,
+  useSubmit,
+  useParams,
+  useRoutes,
+  useNavigationType
+  {{~#each exports}}
+    {{~#if @first}},
+    {{/if}}
+    {{#isArray this.specifier}}
+      {{~#each this.specifier}}  {{this}}
+        {{~#unless (and @last @../last)}},
+        {{/unless~}}
+      {{/each}}
+    {{/isArray}}
+    {{~#isString this.specifier}}  {{this.specifier}}
+      {{~#unless @last}},
+      {{/unless}}
+    {{/isString}}
+  {{/each}}
+  
+}

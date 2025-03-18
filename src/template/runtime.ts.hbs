@@ -1,0 +1,15 @@
+// @ts-nocheck
+{{#if runtimes.length}}
+  {{~#each runtimes~}}
+    import runtime{{@index}} from '{{this}}'
+  {{/each}}
+  
+{{/if}}
+export default [
+  {{#each runtimes}}
+  runtime{{@index}}
+  {{~#unless @last}},
+  {{/unless}}
+  {{/each}}
+
+]

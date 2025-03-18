@@ -1,0 +1,9 @@
+{{#each models}}
+import model_{{@index}} from '{{this.path}}'
+{{/each}}
+
+export const models = {
+{{#each models}}
+  model_{{@index}}: { namespace: '{{this.name}}', model: model_{{@index}} }{{#unless @last}},{{/unless}}
+{{/each}}
+} as const

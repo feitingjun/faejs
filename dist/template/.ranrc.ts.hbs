@@ -1,0 +1,5 @@
+import { defineFaeConfig } from '@faejs/app'
+
+export default definefaeConfig({
+  {{#unless (isEqual srcDir "src")}}'srcDir': '{{srcDir}}'{{/unless}}
+})

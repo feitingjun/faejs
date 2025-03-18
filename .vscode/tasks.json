@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [{
+    "detail": "删除旧文件夹",
+    "label": "clean",
+    "type": "shell",
+    "command": "rm",
+    "args": ["-rf", "${workspaceFolder}/my-app"],
+    "options": {
+      "cwd": "${workspaceFolder}"
+    }
+  },{
+    "detail": "执行create命令",
+    "label": "create",
+    "dependsOn": ["clean"],
+    "type": "shell",
+    "command": "node",
+    "args": ["${workspaceFolder}/dist/bin/index.js", "create"],
+    "options": {
+      "cwd": "${workspaceFolder}"
+    }
+  },{
+    "detail": "重新将faejs包link到全局",
+    "label": "linkGlobal",
+    "dependsOn": ["create"],
+    "type": "shell",
+    "command": "npm link",
+    "options": {
+      "cwd": "${workspaceFolder}"
+    }
+  },{
+    "detail": "link包",
+    "label": "link",
+    "dependsOn": ["linkGlobal"],
+    "type": "shell",
+    "command": "npm link @faejs/app",
+    "options": {
+      "cwd": "${workspaceFolder}/my-app"
+    }
+  }]
+}

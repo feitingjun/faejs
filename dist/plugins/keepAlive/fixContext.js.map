@@ -1,0 +1,1 @@
+{"version":3,"file":"fixContext.js","sourceRoot":"","sources":["../../../src/plugins/keepAlive/fixContext.ts"],"names":[],"mappings":"AAAA,OAAO,UAAU,MAAM,mBAAmB,CAAC;AAC3C,OAAO,aAAa,MAAM,uBAAuB,CAAC;AAClD,OAAO,EAAE,cAAc,EAAE,MAAM,kBAAkB,CAAC;AAElD,mCAAmC;AACnC,cAAc,CACZ,CAAC,UAAU,EAAE,KAAK,EAAE,MAAM,EAAE,QAAQ,CAAC,EACrC,CAAC,aAAa,EAAE,KAAK,EAAE,MAAM,EAAE,QAAQ,CAAC,CACzC,CAAA"}

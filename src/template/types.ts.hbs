@@ -1,0 +1,49 @@
+import type {
+  AppConfig as AppConfigType,
+  PageConfig as PageRouteConfig,
+  DataLoader,
+  DataLoadeContext
+} from '@faejs/app'
+{{#each all~}}
+import {{#isArray this.specifier~}}
+    { {{#each this.specifier}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} }
+  {{~/isArray~}}
+  {{#isString this.specifier}}{{this.specifier}}{{/isString}} from '{{this.source}}'
+{{/each}}
+
+export type ExtendPageConfig = {{#unless pageConfigTypes.length}}{}{{/unless}}
+{{~#if pageConfigTypes.length}}
+  {{#each pageConfigTypes}}
+    {{~#isArray this.specifier}}
+      {{~#each this.specifier}}
+        {{~#unless (and @first @../first)}} & {{/unless}}
+        {{~this~}}
+      {{/each}}
+    {{~/isArray}}
+    {{~#isString this.specifier}}{{#unless @first}} & {{/unless}}{{this.specifier}}{{/isString}}
+  {{~/each}}
+{{/if}}
+
+
+export type ExtendAppConfig = {{#unless appConfigTypes.length}}{}{{/unless}}
+{{~#if appConfigTypes.length}}
+  {{#each appConfigTypes}}
+    {{~#isArray this.specifier}}
+      {{~#each this.specifier}}
+        {{~#unless (and @first @../first)}} & {{/unless}}
+        {{~this~}}
+      {{/each}}
+    {{~/isArray}}
+    {{~#isString this.specifier}}{{#unless @first}} & {{/unless}}{{this.specifier}}{{/isString}}
+  {{~/each}}
+{{/if}}
+
+
+export type PageConfig<P extends {}> = PageRouteConfig<P & ExtendPageConfig, unknown>
+
+export type AppConfig<T={}, D extends Record<string, unknown>={}> = AppConfigType<T & ExtendAppConfig, D>
+
+export {
+  DataLoader,
+  DataLoadeContext
+}

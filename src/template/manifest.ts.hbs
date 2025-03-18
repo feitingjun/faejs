@@ -1,0 +1,15 @@
+export default {
+{{#each manifest}}
+  '{{this.id}}': {
+    id: '{{this.id}}',
+    path: '{{this.path}}',
+    pathname: '{{this.pathname}}',
+    {{#if this.parentId}}
+    parentId: '{{this.parentId}}',
+    {{/if}}
+    file: '{{this.file}}',
+    layout: {{boolean this.layout}},
+    component: () => import('{{rmTsx this.file}}')
+  }{{#unless @last}},{{/unless}}
+{{/each}}
+}

@@ -1,0 +1,46 @@
+{
+  "name": "@faejs/app",
+  "version": "0.0.1",
+  "description": "基于vite的轻量级react脚手架",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "fae": "./dist/bin/index.js"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./plugins/*": "./dist/plugins/*/index.js"
+  },
+  "scripts": {
+    "create": "fea create",
+    "dev": "fea dev",
+    "start": "node build.js -w -d",
+    "build": "node build.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@inquirer/prompts": "^7.4.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "chokidar": "^4.0.3",
+    "commander": "^13.1.0",
+    "fast-deep-equal": "^3.1.3",
+    "glob": "^11.0.1",
+    "handlebars": "^4.7.8",
+    "vite": "^6.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^7.3.0",
+    "typescript": "^5.8.2"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19",
+    "react-router": ">=7"
+  }
+}
