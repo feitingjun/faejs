@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { createElement, StrictMode, createContext, useContext } from 'react';
-import { useLoaderData as useRouteLoaderData, createBrowserRouter, createHashRouter, createMemoryRouter, RouterProvider, Outlet, } from 'react-router';
+import { useLoaderData as useRouteLoaderData, createBrowserRouter, createHashRouter, createMemoryRouter, RouterProvider, Outlet } from 'react-router';
 const AppContext = createContext({
     manifest: {},
     routes: [],

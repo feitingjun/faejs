@@ -3,7 +3,7 @@ import { resolve, relative } from 'path';
 import { renderToString } from 'react-dom/server';
 import { globSync } from 'glob';
 import { createElement } from 'react';
-import { dynamicImport, debounce, chalk } from "../utils.js";
+import { dynamicImport, debounce, chalk, getLocalIp } from "../utils.js";
 import { renderHbsTpl } from "../hbs.js";
 import { createTmpDir, writeFaeRoutesTs } from "../writeFile.js";
 import model from "../plugins/model/index.js";
@@ -15,8 +15,8 @@ function needGenerateRoutes(path, srcDir = 'src') {
     // 匹配src目录下的layout(s).tsx | layout(s)/index.tsx
     const regex = new RegExp(`^${srcDir}/(layout|layouts)(?:/index)?.tsx$`);
     const isRootLayout = regex.test(path);
-    // 匹配以(.)page.tsx | layout.tsx | layout/index.tsx 结尾且page.tsx不在layout(s)下的文件
-    const isPageOrLayout = /^(?:(?!.*(layout|layouts)\/.*page\.tsx).)*\/((\S+\.)?page\.tsx|layout(\/index)?\.tsx)$/.test(path);
+    // 匹配以(.)page.tsx | (.)layout.tsx | layout/index.tsx 结尾且page.tsx不在layout(s)下的文件
+    const isPageOrLayout = /^(?:(?!.*(layout|layouts)\/.*page\.tsx).)*\/((\S+\.)?page\.tsx|(\S+\.)?layout\.tsx|layout\/index\.tsx)$/.test(path);
     // 是否在指定的pages目录下
     const inPagesDir = existsSync(resolve(process.cwd(), srcDir, 'pages')) ? path.startsWith(`${srcDir}/pages`) : path.startsWith(srcDir);
     return (isRootLayout || (isPageOrLayout && inPagesDir) || path === srcDir || path === `${srcDir}/pages`);
@@ -29,7 +29,7 @@ function generateRouteManifest(src = 'src') {
     // 获取全局layout
     const rootLayout = globSync('layout{s,}{/index,}.tsx', { cwd: srcDir });
     // 获取所有页面
-    const include = ['**/*{[^/],}page.tsx', '**/layout{/index,}.tsx'];
+    const include = ['**/{*.,}page.tsx', '**/{*.,}layout.tsx', '**/layout/index.tsx'];
     const ignore = ['**/layout/**/*{[^/],}page.tsx', '**/layout/**/layout.tsx'];
     const pages = globSync(include, { cwd: resolve(srcDir, pageDir), ignore });
     // 获取id和文件的映射
@@ -92,18 +92,21 @@ async function watchRoutes(server, event, path, srcDir = 'src') {
     // 获取项目根目录的的路径
     path = relative(process.cwd(), path);
     // 用户配置变更后重启服务器
-    if (path === '.sanrc.ts') {
-        console.log(chalk.green('.sanrc.ts 文件变更，服务器重启中...'));
-        return server.restart();
+    if (path === '.faerc.ts') {
+        console.log(chalk.green('.faerc.ts 文件变更，服务器重启中...'));
+        return server.restart(true).then(() => {
+            const port = server.config.server.port;
+            console.log(chalk.blue('服务器重启成功'));
+            console.log(`  - Local: ${chalk.green(`http://localhost:${port}`)}`);
+            console.log(`  - Network: ${chalk.green(`http://${getLocalIp()}:${port}`)}\n`);
+        });
     }
     // 重新生成路由
     if (event !== 'change' && needGenerateRoutes(path)) {
-        writeFaeRoutesTs(process.cwd(), generateRouteManifest(srcDir));
+        writeFaeRoutesTs(resolve(process.cwd(), srcDir, '.fae'), generateRouteManifest(srcDir));
     }
 }
-/**vite插件，负责解析.faerc.ts配置，生成约定式路由，以及提供fae插件功能*/
-export default function FaeCore() {
-    let faeConfig = {};
+function loadPlugins(faeConfig) {
     // 运行时配置
     const runtimes = [];
     // 额外的pageConfig类型
@@ -150,10 +153,58 @@ export default function FaeCore() {
     const addWatch = (fn) => {
         watchers.push(fn);
     };
+    // 解析fae插件
+    if (faeConfig.plugins) {
+        // 动态导入package.json
+        const pkgText = readFileSync(`${process.cwd()}/package.json`, 'utf-8');
+        const pkg = JSON.parse(pkgText);
+        // 执行fae插件
+        faeConfig.plugins.forEach(plugin => {
+            const { setup, runtime } = plugin;
+            const context = {
+                mode: process.env.NODE_ENV,
+                root: process.cwd(),
+                srcDir: faeConfig.srcDir ?? 'src',
+                userConfig: faeConfig,
+                pkg
+            };
+            if (runtime)
+                runtimes.push(runtime);
+            setup?.({
+                context,
+                modifyUserConfig,
+                addFile,
+                addFileTemplate,
+                addPageConfigType,
+                addAppConfigType,
+                addExport,
+                addEntryImport,
+                addEntryCodeAhead,
+                addEntryCodeTail,
+                addWatch
+            });
+        });
+    }
+    return {
+        pageConfigTypes,
+        appConfigTypes,
+        exports,
+        imports,
+        aheadCodes,
+        tailCodes,
+        runtimes,
+        watchers
+    };
+}
+/**vite插件，负责解析.faerc.ts配置，生成约定式路由，以及提供fae插件功能*/
+export default function FaeCore() {
+    let faeConfig = {};
+    let watchers = [];
     return {
         name: 'fae-core',
         enforce: 'pre',
         config: async (config) => {
+            watchers = [];
             faeConfig = (await dynamicImport(`${process.cwd()}/.faerc.ts`)).default;
             // 添加默认插件
             if ((faeConfig.model || faeConfig.keepAlive || faeConfig.access) && !faeConfig.plugins) {
@@ -165,42 +216,12 @@ export default function FaeCore() {
                 faeConfig.plugins?.push(keepAlive);
             if (faeConfig.access)
                 faeConfig.plugins?.push(access);
-            // 解析fae插件
-            if (faeConfig.plugins) {
-                // 动态导入package.json
-                const pkgText = readFileSync(`${process.cwd()}/package.json`, 'utf-8');
-                const pkg = JSON.parse(pkgText);
-                // 执行fae插件
-                faeConfig.plugins.forEach(plugin => {
-                    const { setup, runtime } = plugin;
-                    const context = {
-                        mode: process.env.NODE_ENV,
-                        root: process.cwd(),
-                        srcDir: faeConfig.srcDir ?? 'src',
-                        userConfig: faeConfig,
-                        pkg
-                    };
-                    if (runtime)
-                        runtimes.push(runtime);
-                    setup?.({
-                        context,
-                        modifyUserConfig,
-                        addFile,
-                        addFileTemplate,
-                        addPageConfigType,
-                        addAppConfigType,
-                        addExport,
-                        addEntryImport,
-                        addEntryCodeAhead,
-                        addEntryCodeTail,
-                        addWatch
-                    });
-                });
-            }
+            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = loadPlugins(faeConfig);
             // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
             const { port, base, publicDir, srcDir = 'src', outDir = 'dist', alias, open, proxy, chunkSizeWarningLimit } = faeConfig;
             faeConfig.srcDir = srcDir;
             faeConfig.outDir = outDir;
+            watchers = pluginWatchers;
             // 创建临时文件夹
             createTmpDir({
                 root: process.cwd(),

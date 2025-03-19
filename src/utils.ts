@@ -57,7 +57,8 @@ export async function dynamicImport(source:string){
   const path = resolve(tempDir, filename + '.mjs')
   writeFileSync(path, jsCode)
   writeFileSync(resolve(tempDir, filename + '.mjs.map'), result.sourceMapText!)
-  return await import(path)
+  // 请求添加时间戳，避免缓存(import同一个路径默认值加载一次)
+  return await import(`${path}?t=${Date.now()}`)
 }
 
 // 深拷贝

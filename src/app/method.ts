@@ -15,8 +15,7 @@ import {
   createMemoryRouter,
   LoaderFunction,
   RouterProvider,
-  Outlet,
-  useOutlet,
+  Outlet
 } from 'react-router'
 import {
   AppContextType,

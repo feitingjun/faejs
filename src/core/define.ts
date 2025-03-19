@@ -1,6 +1,6 @@
 import { FaeConfig, Plugin, Runtime } from './types'
 
-/**定义.ranrc.ts用户配置 */
+/**定义.faerc.ts用户配置 */
 export function defineFaeConfig(config: FaeConfig){ return config }
 
 /**定义插件 */

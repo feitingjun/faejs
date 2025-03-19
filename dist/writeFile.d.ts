@@ -10,21 +10,21 @@ export declare function writeAppTs(root: string, srcDir: string): void;
 /**写入page.tsx文件 */
 export declare function writeIndexPageTsx(root: string, srcDir: string): void;
 /**创建.fae/index.ts文件 */
-export declare function writeFaeIndexts(tmpDir: string, exports?: AddFileOptions[]): void;
+export declare function writeFaeIndexts(outDir: string, exports?: AddFileOptions[]): void;
 /**创建.fae/entry.tsx文件 */
-export declare function writeEntryTsx(tmpDir: string, data: {
+export declare function writeEntryTsx(outDir: string, data: {
     imports: MakePropertyOptional<AddFileOptions, 'specifier'>[];
     aheadCodes: string[];
     tailCodes: string[];
 }): void;
-/**写入.san/types.ts */
-export declare function writeFaeTypesTs(tmpDir: string, pageConfigTypes?: AddFileOptions[], appConfigTypes?: AddFileOptions[]): void;
-/**写入.san/define.ts */
-export declare function writeFaeDefineTs(tmpDir: string): void;
+/**写入.fae/types.ts */
+export declare function writeFaeTypesTs(outDir: string, pageConfigTypes?: AddFileOptions[], appConfigTypes?: AddFileOptions[]): void;
+/**写入.fae/define.ts */
+export declare function writeFaeDefineTs(outDir: string): void;
 /**写入.fae/manifest.ts */
-export declare function writeFaeRoutesTs(tmpDir: string, manifest: RouteManifest): void;
-/**写入.san/runtimes.ts */
-export declare function wirteRuntime(tmpDir: string, runtimes?: string[]): void;
+export declare function writeFaeRoutesTs(outDir: string, manifest: RouteManifest): void;
+/**写入.fae/runtimes.ts */
+export declare function wirteRuntime(outDir: string, runtimes?: string[]): void;
 /**创建临时文件夹 */
 export declare function createTmpDir({ root, srcDir, options }: {
     root: string;

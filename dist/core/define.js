@@ -1,4 +1,4 @@
-/**定义.ranrc.ts用户配置 */
+/**定义.faerc.ts用户配置 */
 export function defineFaeConfig(config) { return config; }
 /**定义插件 */
 export function definePlugin(plugin) { return plugin; }

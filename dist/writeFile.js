@@ -46,26 +46,26 @@ export function writeIndexPageTsx(root, srcDir) {
     });
 }
 /**创建.fae/index.ts文件 */
-export function writeFaeIndexts(tmpDir, exports) {
+export function writeFaeIndexts(outDir, exports) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'index.ts.hbs'),
-        outPath: resolve(tmpDir, 'index.ts'),
+        outPath: resolve(outDir, 'index.ts'),
         data: { exports }
     });
 }
 /**创建.fae/entry.tsx文件 */
-export function writeEntryTsx(tmpDir, data) {
+export function writeEntryTsx(outDir, data) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'entry.tsx.hbs'),
-        outPath: resolve(tmpDir, 'entry.tsx'),
+        outPath: resolve(outDir, 'entry.tsx'),
         data: {
             ...data,
-            srcDir: resolve(tmpDir, '..')
+            srcDir: resolve(outDir, '..')
         }
     });
 }
-/**写入.san/types.ts */
-export function writeFaeTypesTs(tmpDir, pageConfigTypes = [], appConfigTypes = []) {
+/**写入.fae/types.ts */
+export function writeFaeTypesTs(outDir, pageConfigTypes = [], appConfigTypes = []) {
     const all = deepClone([...pageConfigTypes, ...appConfigTypes]).reduce((acc, item) => {
         const index = acc.findIndex(v => v.source === item.source);
         if (index > -1 && Array.isArray(item.specifier) && Array.isArray(acc[index].specifier)) {
@@ -78,59 +78,59 @@ export function writeFaeTypesTs(tmpDir, pageConfigTypes = [], appConfigTypes = [
     }, []);
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'types.ts.hbs'),
-        outPath: resolve(tmpDir, 'types.ts'),
+        outPath: resolve(outDir, 'types.ts'),
         data: { all, pageConfigTypes, appConfigTypes }
     });
 }
-/**写入.san/define.ts */
-export function writeFaeDefineTs(tmpDir) {
+/**写入.fae/define.ts */
+export function writeFaeDefineTs(outDir) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'define.ts.hbs'),
-        outPath: `${tmpDir}/define.ts`,
+        outPath: `${outDir}/define.ts`,
         data: {
-            srcDir: resolve(tmpDir, '..')
+            srcDir: resolve(outDir, '..')
         }
     });
 }
 /**写入.fae/manifest.ts */
-export function writeFaeRoutesTs(tmpDir, manifest) {
+export function writeFaeRoutesTs(outDir, manifest) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'manifest.ts.hbs'),
-        outPath: resolve(tmpDir, 'manifest.ts'),
+        outPath: resolve(outDir, 'manifest.ts'),
         data: { manifest: Object.values(manifest).sort((a, b) => {
                 const nA = a.id.replace(/\/?layout/, ''), nB = b.id.replace(/\/?layout/, '');
                 return nA.length === nB.length ? b.id.indexOf('layout') : nA.length - nB.length;
             }) }
     });
 }
-/**写入.san/runtimes.ts */
-export function wirteRuntime(tmpDir, runtimes) {
+/**写入.fae/runtimes.ts */
+export function wirteRuntime(outDir, runtimes) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'runtime.ts.hbs'),
-        outPath: resolve(tmpDir, 'runtime.ts'),
+        outPath: resolve(outDir, 'runtime.ts'),
         data: { runtimes }
     });
 }
 /**创建临时文件夹 */
 export function createTmpDir({ root, srcDir, options }) {
     const { manifest = {}, pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes } = options;
-    const tmpDir = resolve(root, srcDir, '.fae');
-    if (!existsSync(tmpDir)) {
-        mkdirSync(tmpDir, { recursive: true });
+    const outDir = resolve(root, srcDir, '.fae');
+    if (!existsSync(outDir)) {
+        mkdirSync(outDir, { recursive: true });
     }
     // 创建.fae/index.ts文件
-    writeFaeIndexts(tmpDir, exports);
+    writeFaeIndexts(outDir, exports);
     // 创建.fae/entry.tsx
-    writeEntryTsx(tmpDir, {
+    writeEntryTsx(outDir, {
         imports, aheadCodes, tailCodes
     });
     // 创建.fae/types.ts
-    writeFaeTypesTs(tmpDir, pageConfigTypes, appConfigTypes);
+    writeFaeTypesTs(outDir, pageConfigTypes, appConfigTypes);
     // 创建.fae/define.ts
-    writeFaeDefineTs(tmpDir);
+    writeFaeDefineTs(outDir);
     // 创建.fae/routes.ts
-    writeFaeRoutesTs(tmpDir, manifest);
+    writeFaeRoutesTs(outDir, manifest);
     // 创建.fae/runtime.tsx
-    wirteRuntime(tmpDir, runtimes);
+    wirteRuntime(outDir, runtimes);
 }
 //# sourceMappingURL=writeFile.js.map

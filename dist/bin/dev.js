@@ -41,7 +41,7 @@ export default async function startDevServer(defaultPort = 8000) {
     });
     server.listen().then(() => {
         const port = server.config.server.port;
-        console.log('服务器启动成功：');
+        console.log(chalk.blue('服务器启动成功：'));
         console.log(`  - Local: ${chalk.green(`http://localhost:${port}`)}`);
         console.log(`  - Network: ${chalk.green(`http://${getLocalIp()}:${port}`)}\n`);
     }).catch((err) => {
