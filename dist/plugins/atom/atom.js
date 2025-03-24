@@ -33,6 +33,10 @@ class BaseAtom {
         this.state = newV;
         this.listeners.forEach(cb => cb());
     };
+    subscribe = (cb) => {
+        this.listeners.add(cb);
+        return () => this.listeners.delete(cb);
+    };
 }
 /**基本atom */
 class Atom extends BaseAtom {
@@ -40,13 +44,6 @@ class Atom extends BaseAtom {
         super(initValue, setCombine);
         this.state = initValue;
     }
-    get = () => {
-        return this.state;
-    };
-    subscribe = (cb) => {
-        this.listeners.add(cb);
-        return () => this.listeners.delete(cb);
-    };
 }
 /**组合atom */
 class CombineAtom extends BaseAtom {
@@ -59,35 +56,24 @@ class CombineAtom extends BaseAtom {
     constructor(initValue, setCombine) {
         super(initValue, setCombine);
         this.getCombine = initValue;
-        this.promise = this.getCombineValue();
+        this.promise = this.getCombineValue(true);
     }
-    getCombineValue = async () => {
-        const value = await this.getCombine((atom) => {
+    getCombineValue = async (first) => {
+        const combines = this.getCombine((atom) => {
             {
                 this.atoms.add(atom);
                 return atom.get();
             }
         });
-        // 不能调用this.set方法，如果setCombine内变更了当前atom依赖的其他atom，可能会导致死循环
-        this.state = value;
-        this.listeners.forEach(cb => cb());
+        if (first)
+            this.atoms.forEach(atom => atom.subscribe(this.getCombineValue));
+        const value = await combines;
+        this.onlySet(value);
     };
     set = (value) => {
         const newV = typeof value === 'function' ? value(this.state) : value;
-        if (this.setCombine) {
+        if (this.setCombine)
             this.setCombine(newV, getAtom, setAtom);
-            return;
-        }
-    };
-    subscribe = (cb) => {
-        const ubsubs = [];
-        // 没有订阅时，重新订阅需要执行getCombineValue以获取最新值(有订阅时，会触发更新)
-        if (this.listeners.size === 0)
-            this.getCombineValue();
-        this.atoms.forEach(atom => ubsubs.push(atom.subscribe(this.getCombineValue)));
-        this.listeners.add(cb);
-        ubsubs.push(() => this.listeners.delete(cb));
-        return () => ubsubs.forEach(ubsub => ubsub());
     };
 }
 export function atom(initValue, setCombine) {

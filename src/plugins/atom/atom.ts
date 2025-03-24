@@ -41,6 +41,10 @@ class BaseAtom<T> {
     this.state = newV
     this.listeners.forEach(cb => cb())
   }
+  subscribe = (cb: () => void) => {
+    this.listeners.add(cb)
+    return () => this.listeners.delete(cb)
+  }
 }
 
 /**基本atom */
@@ -48,13 +52,6 @@ class Atom<T> extends BaseAtom<T> {
   constructor(initValue: T, setCombine?: SetCombine<T>) {
     super(initValue, setCombine)
     this.state = initValue
-  }
-  get = (): T => {
-    return this.state
-  }
-  subscribe = (cb: () => void) => {
-    this.listeners.add(cb)
-    return () => this.listeners.delete(cb)
   }
 }
 
@@ -70,32 +67,20 @@ class CombineAtom<T> extends BaseAtom<T> {
   constructor(initValue: GetCombine<T>, setCombine?: SetCombine<T>) {
     super(initValue, setCombine)
     this.getCombine = initValue
-    this.promise = this.getCombineValue()
+    this.promise = this.getCombineValue(true)
   }
-  getCombineValue = async () => {
-    const value = await this.getCombine(<D>(atom:Atom<D>) => {{
+  getCombineValue = async (first?:boolean) => {
+    const combines = this.getCombine(<D>(atom:Atom<D>) => {{
       this.atoms.add(atom)
       return atom.get()
     }})
-    // 不能调用this.set方法，如果setCombine内变更了当前atom依赖的其他atom，可能会导致死循环
-    this.state = value
-    this.listeners.forEach(cb => cb())
+    if(first) this.atoms.forEach(atom => atom.subscribe(this.getCombineValue))
+    const value = await combines
+    this.onlySet(value)
   }
   set = (value: any | ((oldV: T) => any)) => {
     const newV = typeof value === 'function' ? (value as (oldV:T) => T)(this.state) : value
-    if(this.setCombine){
-      this.setCombine(newV, getAtom, setAtom)
-      return
-    }
-  }
-  subscribe = (cb: () => void) => {
-    const ubsubs:(()=> void)[] = []
-    // 没有订阅时，重新订阅需要执行getCombineValue以获取最新值(有订阅时，会触发更新)
-    if(this.listeners.size === 0) this.getCombineValue()
-    this.atoms.forEach(atom => ubsubs.push(atom.subscribe(this.getCombineValue)))
-    this.listeners.add(cb)
-    ubsubs.push(() => this.listeners.delete(cb))
-    return () => ubsubs.forEach(ubsub => ubsub())
+    if(this.setCombine) this.setCombine(newV, getAtom, setAtom)
   }
 }
 

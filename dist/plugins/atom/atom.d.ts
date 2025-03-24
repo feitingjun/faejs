@@ -14,12 +14,11 @@ declare class BaseAtom<T> {
     get: () => T;
     onlySet: (value: T | ((oldV: T) => T)) => void;
     set: (value: T | ((oldV: T) => T)) => void;
+    subscribe: (cb: () => void) => () => boolean;
 }
 /**基本atom */
 declare class Atom<T> extends BaseAtom<T> {
     constructor(initValue: T, setCombine?: SetCombine<T>);
-    get: () => T;
-    subscribe: (cb: () => void) => () => boolean;
 }
 /**组合atom */
 declare class CombineAtom<T> extends BaseAtom<T> {
@@ -30,9 +29,8 @@ declare class CombineAtom<T> extends BaseAtom<T> {
     /**初始异步加载数据的promise(供react的use方法使用，以此使组件在数据为加载完成时等待) */
     promise: Promise<void>;
     constructor(initValue: GetCombine<T>, setCombine?: SetCombine<T>);
-    getCombineValue: () => Promise<void>;
+    getCombineValue: (first?: boolean) => Promise<void>;
     set: (value: any | ((oldV: T) => any)) => void;
-    subscribe: (cb: () => void) => () => void;
 }
 /**
  * 创建一个atom
