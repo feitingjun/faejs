@@ -9,6 +9,7 @@ import { createTmpDir, writeFaeRoutesTs } from "../writeFile.js";
 import model from "../plugins/model/index.js";
 import keepAlive from "../plugins/keepAlive/index.js";
 import access from "../plugins/access/index.js";
+import atom from "../plugins/atom/index.js";
 const __dirname = import.meta.dirname;
 /**是否需要重新生成路由 */
 function needGenerateRoutes(path, srcDir = 'src') {
@@ -154,7 +155,7 @@ function loadPlugins(faeConfig) {
         watchers.push(fn);
     };
     // 解析fae插件
-    if (faeConfig.plugins) {
+    if (faeConfig.plugins && faeConfig.plugins.length > 0) {
         // 动态导入package.json
         const pkgText = readFileSync(`${process.cwd()}/package.json`, 'utf-8');
         const pkg = JSON.parse(pkgText);
@@ -207,15 +208,16 @@ export default function FaeCore() {
             watchers = [];
             faeConfig = (await dynamicImport(`${process.cwd()}/.faerc.ts`)).default;
             // 添加默认插件
-            if ((faeConfig.model || faeConfig.keepAlive || faeConfig.access) && !faeConfig.plugins) {
+            if (!faeConfig.plugins)
                 faeConfig.plugins = [];
-            }
             if (faeConfig.model)
-                faeConfig.plugins?.push(model);
+                faeConfig.plugins.push(model);
             if (faeConfig.keepAlive)
-                faeConfig.plugins?.push(keepAlive);
+                faeConfig.plugins.push(keepAlive);
             if (faeConfig.access)
-                faeConfig.plugins?.push(access);
+                faeConfig.plugins.push(access);
+            if (faeConfig.atom)
+                faeConfig.plugins.push(atom);
             const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = loadPlugins(faeConfig);
             // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
             const { port, base, publicDir, srcDir = 'src', outDir = 'dist', alias, open, proxy, chunkSizeWarningLimit } = faeConfig;

@@ -31,6 +31,8 @@ export interface FaeConfig {
   keepAlive?: boolean
   /**是否启用access插件 */
   access?: boolean
+  /**是否启用atom插件 */
+  atom?: boolean
 }
 
 /**添加临时文件方法参数 */
