@@ -32,6 +32,8 @@ export interface FaeConfig {
     access?: boolean;
     /**是否启用atom插件 */
     atom?: boolean;
+    /**是否启用jotai插件 */
+    jotai?: boolean;
 }
 /**添加临时文件方法参数 */
 export interface AddFileOptions {

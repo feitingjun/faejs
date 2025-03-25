@@ -2,8 +2,9 @@ import { useSyncExternalStore, use } from 'react'
 
 type GetAtom = <T>(atom:Atom<T>|CombineAtom<T>) => T
 type SetAtom = <T>(atom:Atom<T>|CombineAtom<T>, value:T|((oldV:T) => T)) => void
-type GetCombine<T> = (get: GetAtom) => T | Promise<T>
-type SetCombine<T, R> = (value: T, get: GetAtom, set: SetAtom) => R
+type Read<T> = (get: GetAtom) => T | Promise<T>
+type Write<T> = (value: T, get: GetAtom, set: SetAtom) => T
+type WriteCombine<T> = (value: T, get: GetAtom, set: SetAtom) => void
 
 /**根据传入的atom获取值 */
 const getAtom:GetAtom = atom => atom.get()
@@ -17,13 +18,26 @@ class BaseAtom<T> {
   /** 订阅者列表 */
   protected listeners: Set<() => void> = new Set()
   /**当前atom的自定义set函数，如果存在setCombine方法，state的变更由用户完全接管 */
-  protected setCombine: SetCombine<T, any> | undefined
+  protected setCombine?: Write<T> | WriteCombine<unknown>
   
-  constructor(_: T|GetCombine<T>, setCombine?: SetCombine<T, any>) {
+  constructor(_: T|Read<T>, setCombine?: Write<T> | WriteCombine<unknown>) {
     this.setCombine = setCombine
   }
   get = (): T => {
     return this.state
+  }
+  subscribe = (cb: () => void) => {
+    this.listeners.add(cb)
+    return () => this.listeners.delete(cb)
+  }
+}
+
+/**基本atom */
+class Atom<T> extends BaseAtom<T> {
+  declare protected setCombine?: Write<T>
+  constructor(initValue: T, setCombine?: Write<T>) {
+    super(initValue, setCombine)
+    this.state = initValue
   }
   // 更新state值，触发setCombine
   set = (value: T | ((oldV: T) => T)) => {
@@ -34,32 +48,19 @@ class BaseAtom<T> {
     this.state = newV
     this.listeners.forEach(cb => cb())
   }
-  subscribe = (cb: () => void) => {
-    this.listeners.add(cb)
-    return () => this.listeners.delete(cb)
-  }
-}
-
-/**基本atom */
-class Atom<T> extends BaseAtom<T> {
-  declare protected setCombine: SetCombine<T, T> | undefined
-  constructor(initValue: T, setCombine?: SetCombine<T, T>) {
-    super(initValue, setCombine)
-    this.state = initValue
-  }
 }
 
 /**组合atom */
 class CombineAtom<T> extends BaseAtom<T> {
   /** 依赖atom列表，任意一个atom变更，都会触发getCombine方法 */
   private atoms: Set<Atom<any>|CombineAtom<any>> = new Set()
-  declare protected setCombine: SetCombine<T, void> | undefined
+  declare protected setCombine?: WriteCombine<any>
   /**当前atom的自定义get函数，通常用来从其他一个或多个atom获取组合数据，如果存在此方法，此atom的state不能手动变更 */
-  private getCombine: GetCombine<T>
+  private getCombine: Read<T>
   /**初始异步加载数据的promise(供react的use方法使用，以此使组件在数据为加载完成时等待) */
   promise: Promise<void>
   
-  constructor(initValue: GetCombine<T>, setCombine?: SetCombine<T, void>) {
+  constructor(initValue: Read<T>, setCombine?: WriteCombine<any>) {
     super(initValue, setCombine)
     this.getCombine = initValue
     this.promise = this.getCombineValue(true)
@@ -74,7 +75,7 @@ class CombineAtom<T> extends BaseAtom<T> {
     this.state = value
     this.listeners.forEach(cb => cb())
   }
-  set = (value: any | ((oldV: T) => any)) => {
+  set = (value: any | ((oldV: T) => void)) => {
     const newV = typeof value === 'function' ? (value as (oldV:T) => T)(this.state) : value
     if(this.setCombine) this.setCombine(newV, getAtom, setAtom)
   }
@@ -89,13 +90,13 @@ class CombineAtom<T> extends BaseAtom<T> {
  ** 当state变更时，会执行此方法，可在此方法内变更其他atom的state， 且当前atom的state需要在此函数内部手动接管
  * @returns atom
  */
-export function atom<T>(initValue: GetCombine<T>, setCombine?: SetCombine<any, void>): CombineAtom<T>;
-export function atom<T>(initValue: T, setCombine?: SetCombine<T, T>): Atom<T>;
-export function atom<T>(initValue: T | GetCombine<T>, setCombine?: SetCombine<T, T>){
+export function atom<T, D>(initValue: Read<T>, setCombine?: WriteCombine<D>): CombineAtom<T>;
+export function atom<T>(initValue: T, setCombine?: Write<T>): Atom<T>;
+export function atom<T, D>(initValue: T | Read<T>, setCombine?: Write<T>|WriteCombine<D>){
   if(typeof initValue === 'function'){
-    return new CombineAtom(initValue as GetCombine<T>, setCombine)
+    return new CombineAtom(initValue as Read<T>, setCombine)
   }
-  return new Atom(initValue, setCombine)
+  return new Atom(initValue as T, setCombine as Write<T>)
 }
 
 /**

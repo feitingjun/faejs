@@ -12,6 +12,7 @@ import model from '../plugins/model'
 import keepAlive from '../plugins/keepAlive'
 import access from '../plugins/access'
 import atom from '../plugins/atom'
+import jotai from '../plugins/jotai'
 
 const __dirname = import.meta.dirname
 
@@ -221,6 +222,7 @@ export default function FaeCore():Plugin{
       if(faeConfig.keepAlive) faeConfig.plugins.push(keepAlive)
       if(faeConfig.access) faeConfig.plugins.push(access)
       if(faeConfig.atom) faeConfig.plugins.push(atom)
+      if(faeConfig.jotai) faeConfig.plugins.push(jotai)
       const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = loadPlugins(faeConfig)
       // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
       const { port, base, publicDir, srcDir='src', outDir='dist', alias, open, proxy, chunkSizeWarningLimit } = faeConfig

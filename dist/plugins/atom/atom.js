@@ -17,15 +17,6 @@ class BaseAtom {
     get = () => {
         return this.state;
     };
-    // 更新state值，触发setCombine
-    set = (value) => {
-        let newV = typeof value === 'function' ? value(this.state) : value;
-        if (this.setCombine) {
-            newV = this.setCombine(newV, getAtom, setAtom);
-        }
-        this.state = newV;
-        this.listeners.forEach(cb => cb());
-    };
     subscribe = (cb) => {
         this.listeners.add(cb);
         return () => this.listeners.delete(cb);
@@ -37,6 +28,15 @@ class Atom extends BaseAtom {
         super(initValue, setCombine);
         this.state = initValue;
     }
+    // 更新state值，触发setCombine
+    set = (value) => {
+        let newV = typeof value === 'function' ? value(this.state) : value;
+        if (this.setCombine) {
+            newV = this.setCombine(newV, getAtom, setAtom);
+        }
+        this.state = newV;
+        this.listeners.forEach(cb => cb());
+    };
 }
 /**组合atom */
 class CombineAtom extends BaseAtom {
