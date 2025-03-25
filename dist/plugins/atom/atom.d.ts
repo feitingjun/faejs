@@ -50,4 +50,14 @@ export declare function atom<T>(initValue: T, setCombine?: SetCombine<T, T>): At
  */
 export declare function useAtom<T>(atom: Atom<T>): [T, Atom<T>['set']];
 export declare function useAtom<T>(atom: CombineAtom<T>): [T, CombineAtom<T>['set']];
+/**
+ * 用于获取组合atom的state
+ * @param atom atom方法创建的实例
+ */
+export declare function useAtomValue<T>(atom: Atom<T> | CombineAtom<T>): T;
+/**
+ * 用于获取atom的setState方法
+ * @param atom atom方法创建的实例
+ */
+export declare function useSetAtom<T>(atom: Atom<T> | CombineAtom<T>): ((value: T | ((oldV: T) => T)) => void) | ((value: any | ((oldV: T) => any)) => void);
 export {};

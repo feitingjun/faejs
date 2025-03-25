@@ -82,4 +82,20 @@ export function useAtom(atom) {
     const state = useSyncExternalStore(atom.subscribe, atom.get);
     return [state, atom.set];
 }
+/**
+ * 用于获取组合atom的state
+ * @param atom atom方法创建的实例
+ */
+export function useAtomValue(atom) {
+    if (atom instanceof CombineAtom && atom.promise)
+        use(atom.promise);
+    return useSyncExternalStore(atom.subscribe, atom.get);
+}
+/**
+ * 用于获取atom的setState方法
+ * @param atom atom方法创建的实例
+ */
+export function useSetAtom(atom) {
+    return atom.set;
+}
 //# sourceMappingURL=atom.js.map

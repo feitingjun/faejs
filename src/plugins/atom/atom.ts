@@ -112,3 +112,21 @@ export function useAtom<T>(atom: Atom<T>|CombineAtom<T>){
   )
   return [state, atom.set]
 }
+/**
+ * 用于获取组合atom的state
+ * @param atom atom方法创建的实例
+ */
+export function useAtomValue<T>(atom: Atom<T> | CombineAtom<T>){
+  if(atom instanceof CombineAtom && atom.promise) use(atom.promise)
+  return useSyncExternalStore(
+    atom.subscribe,
+    atom.get
+  )
+}
+/**
+ * 用于获取atom的setState方法
+ * @param atom atom方法创建的实例
+ */
+export function useSetAtom<T>(atom: Atom<T> | CombineAtom<T>){
+  return atom.set
+}
