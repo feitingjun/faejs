@@ -9,7 +9,7 @@ class BaseAtom {
     state;
     /** 订阅者列表 */
     listeners = new Set();
-    /**当前atom的自定义set函数，如果存在setCombine方法，state的变更由用户完全接管 */
+    /**当前atom的自定义set函数 */
     setCombine;
     constructor(_, setCombine) {
         this.setCombine = setCombine;
@@ -44,7 +44,7 @@ class CombineAtom extends BaseAtom {
     atoms = new Set();
     /**当前atom的自定义get函数，通常用来从其他一个或多个atom获取组合数据，如果存在此方法，此atom的state不能手动变更 */
     getCombine;
-    /**初始异步加载数据的promise(供react的use方法使用，以此使组件在数据为加载完成时等待) */
+    /**初始异步加载数据的promise(供react的use方法使用，以此使组件在数据未加载完成时等待) */
     promise;
     constructor(initValue, setCombine) {
         super(initValue, setCombine);
