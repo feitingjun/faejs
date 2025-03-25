@@ -1,14 +1,14 @@
 import { useSyncExternalStore, use } from 'react'
 
-type GetAtom = <T>(atom:Atom<T>) => T
-type SetAtom = <T>(atom:Atom<T>, value:T|((oldV:T) => T)) => void
+type GetAtom = <T>(atom:Atom<T>|CombineAtom<T>) => T
+type SetAtom = <T>(atom:Atom<T>|CombineAtom<T>, value:T|((oldV:T) => T)) => void
 type GetCombine<T> = (get: GetAtom) => T | Promise<T>
-type SetCombine<T> = (value: T, get: GetAtom, set: SetAtom) => void
+type SetCombine<T, R> = (value: T, get: GetAtom, set: SetAtom) => R
 
 /**根据传入的atom获取值 */
 const getAtom:GetAtom = atom => atom.get()
 /**根据传入的atom设置值 */
-const setAtom:SetAtom = (atom, value) => atom.onlySet(value)
+const setAtom:SetAtom = (atom, value) => atom.set(value)
 
 /** 仿 jotai 的轻量级全局状态管理库 */
 class BaseAtom<T> {
@@ -17,26 +17,19 @@ class BaseAtom<T> {
   /** 订阅者列表 */
   protected listeners: Set<() => void> = new Set()
   /**当前atom的自定义set函数，如果存在setCombine方法，state的变更由用户完全接管 */
-  protected setCombine: SetCombine<T> | undefined
+  protected setCombine: SetCombine<T, any> | undefined
   
-  constructor(_: T|GetCombine<T>, setCombine?: SetCombine<T>) {
+  constructor(_: T|GetCombine<T>, setCombine?: SetCombine<T, any>) {
     this.setCombine = setCombine
   }
   get = (): T => {
     return this.state
   }
-  // 仅更新state值，不触发setCombine(在setCombine内部使用，避免死循环)
-  onlySet = (value: T | ((oldV: T) => T)) => {
-    const newV = typeof value === 'function'? (value as (oldV:T) => T)(this.state) : value
-    this.state = newV
-    this.listeners.forEach(cb => cb())
-  }
   // 更新state值，触发setCombine
   set = (value: T | ((oldV: T) => T)) => {
-    const newV = typeof value === 'function'? (value as (oldV:T) => T)(this.state) : value
+    let newV = typeof value === 'function'? (value as (oldV:T) => T)(this.state) : value
     if(this.setCombine){
-      this.setCombine(newV, getAtom, setAtom)
-      return
+      newV = this.setCombine(newV, getAtom, setAtom)
     }
     this.state = newV
     this.listeners.forEach(cb => cb())
@@ -49,7 +42,8 @@ class BaseAtom<T> {
 
 /**基本atom */
 class Atom<T> extends BaseAtom<T> {
-  constructor(initValue: T, setCombine?: SetCombine<T>) {
+  declare protected setCombine: SetCombine<T, T> | undefined
+  constructor(initValue: T, setCombine?: SetCombine<T, T>) {
     super(initValue, setCombine)
     this.state = initValue
   }
@@ -58,25 +52,27 @@ class Atom<T> extends BaseAtom<T> {
 /**组合atom */
 class CombineAtom<T> extends BaseAtom<T> {
   /** 依赖atom列表，任意一个atom变更，都会触发getCombine方法 */
-  private atoms: Set<Atom<any>> = new Set()
+  private atoms: Set<Atom<any>|CombineAtom<any>> = new Set()
+  declare protected setCombine: SetCombine<T, void> | undefined
   /**当前atom的自定义get函数，通常用来从其他一个或多个atom获取组合数据，如果存在此方法，此atom的state不能手动变更 */
   private getCombine: GetCombine<T>
   /**初始异步加载数据的promise(供react的use方法使用，以此使组件在数据为加载完成时等待) */
   promise: Promise<void>
   
-  constructor(initValue: GetCombine<T>, setCombine?: SetCombine<T>) {
+  constructor(initValue: GetCombine<T>, setCombine?: SetCombine<T, void>) {
     super(initValue, setCombine)
     this.getCombine = initValue
     this.promise = this.getCombineValue(true)
   }
   getCombineValue = async (first?:boolean) => {
-    const combines = this.getCombine(<D>(atom:Atom<D>) => {{
+    const combines = this.getCombine(<D>(atom:Atom<D>|CombineAtom<D>) => {{
       this.atoms.add(atom)
       return atom.get()
     }})
     if(first) this.atoms.forEach(atom => atom.subscribe(this.getCombineValue))
     const value = await combines
-    this.onlySet(value)
+    this.state = value
+    this.listeners.forEach(cb => cb())
   }
   set = (value: any | ((oldV: T) => any)) => {
     const newV = typeof value === 'function' ? (value as (oldV:T) => T)(this.state) : value
@@ -93,9 +89,9 @@ class CombineAtom<T> extends BaseAtom<T> {
  ** 当state变更时，会执行此方法，可在此方法内变更其他atom的state， 且当前atom的state需要在此函数内部手动接管
  * @returns atom
  */
-export function atom<T>(initValue: GetCombine<T>, setCombine?: SetCombine<any>): CombineAtom<T>;
-export function atom<T>(initValue: T, setCombine?: SetCombine<T>): Atom<T>;
-export function atom<T>(initValue: T | GetCombine<T>, setCombine?: SetCombine<T>){
+export function atom<T>(initValue: GetCombine<T>, setCombine?: SetCombine<any, void>): CombineAtom<T>;
+export function atom<T>(initValue: T, setCombine?: SetCombine<T, T>): Atom<T>;
+export function atom<T>(initValue: T | GetCombine<T>, setCombine?: SetCombine<T, T>){
   if(typeof initValue === 'function'){
     return new CombineAtom(initValue as GetCombine<T>, setCombine)
   }

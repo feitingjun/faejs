@@ -2,7 +2,7 @@ import { useSyncExternalStore, use } from 'react';
 /**根据传入的atom获取值 */
 const getAtom = atom => atom.get();
 /**根据传入的atom设置值 */
-const setAtom = (atom, value) => atom.onlySet(value);
+const setAtom = (atom, value) => atom.set(value);
 /** 仿 jotai 的轻量级全局状态管理库 */
 class BaseAtom {
     /** 原子的状态 */
@@ -17,18 +17,11 @@ class BaseAtom {
     get = () => {
         return this.state;
     };
-    // 仅更新state值，不触发setCombine(在setCombine内部使用，避免死循环)
-    onlySet = (value) => {
-        const newV = typeof value === 'function' ? value(this.state) : value;
-        this.state = newV;
-        this.listeners.forEach(cb => cb());
-    };
     // 更新state值，触发setCombine
     set = (value) => {
-        const newV = typeof value === 'function' ? value(this.state) : value;
+        let newV = typeof value === 'function' ? value(this.state) : value;
         if (this.setCombine) {
-            this.setCombine(newV, getAtom, setAtom);
-            return;
+            newV = this.setCombine(newV, getAtom, setAtom);
         }
         this.state = newV;
         this.listeners.forEach(cb => cb());
@@ -68,7 +61,8 @@ class CombineAtom extends BaseAtom {
         if (first)
             this.atoms.forEach(atom => atom.subscribe(this.getCombineValue));
         const value = await combines;
-        this.onlySet(value);
+        this.state = value;
+        this.listeners.forEach(cb => cb());
     };
     set = (value) => {
         const newV = typeof value === 'function' ? value(this.state) : value;
