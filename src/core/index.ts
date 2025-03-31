@@ -9,10 +9,11 @@ import { renderHbsTpl } from '../hbs'
 import { FaeConfig, AddFileOptions, MakePropertyOptional, PluginWatcher, PluginOptions, RouteManifest } from './types'
 import { createTmpDir, writeFaeRoutesTs } from '../writeFile'
 import model from '../plugins/model'
-import keepAlive from '../plugins/keepAlive'
+import reactActivation from '../plugins/reactActivation'
 import access from '../plugins/access'
 import atom from '../plugins/atom'
 import jotai from '../plugins/jotai'
+import keepAlive from '../plugins/keepAlive'
 
 const __dirname = import.meta.dirname
 
@@ -219,10 +220,11 @@ export default function FaeCore():Plugin{
       // 添加默认插件
       if(!faeConfig.plugins) faeConfig.plugins = []
       if(faeConfig.model) faeConfig.plugins.push(model)
-      if(faeConfig.keepAlive) faeConfig.plugins.push(keepAlive)
+      if(faeConfig.reactActivation) faeConfig.plugins.push(reactActivation)
       if(faeConfig.access) faeConfig.plugins.push(access)
       if(faeConfig.atom) faeConfig.plugins.push(atom)
       if(faeConfig.jotai) faeConfig.plugins.push(jotai)
+      if(faeConfig.keepAlive) faeConfig.plugins.push(keepAlive)
       const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = loadPlugins(faeConfig)
       // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
       const { port, base, publicDir, srcDir='src', outDir='dist', alias, open, proxy, chunkSizeWarningLimit } = faeConfig

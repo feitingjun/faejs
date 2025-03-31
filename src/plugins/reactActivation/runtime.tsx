@@ -1,6 +1,7 @@
 import { defineRuntime } from '../../core/define'
 import { useConfig } from '../../app/method'
 import { DefaultPageConfig } from '../../app/types'
+// @ts-ignore
 import { AliveScope, KeepAlive, useAliveController, CachingNode } from 'react-activation'
 import { useLocation } from 'react-router'
 

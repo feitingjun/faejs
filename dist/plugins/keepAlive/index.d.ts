@@ -1,6 +1,5 @@
 declare const _default: {
     name: string;
-    setup({ addExport, addEntryImport, addPageConfigType, addAppConfigType }: import("../..").PluginOptions): void;
-    runtime: string;
+    setup({ addEntryImport, addExport }: import("../..").PluginOptions): void;
 };
 export default _default;

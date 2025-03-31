@@ -7,10 +7,11 @@ import { dynamicImport, debounce, chalk, getLocalIp } from "../utils.js";
 import { renderHbsTpl } from "../hbs.js";
 import { createTmpDir, writeFaeRoutesTs } from "../writeFile.js";
 import model from "../plugins/model/index.js";
-import keepAlive from "../plugins/keepAlive/index.js";
+import reactActivation from "../plugins/reactActivation/index.js";
 import access from "../plugins/access/index.js";
 import atom from "../plugins/atom/index.js";
 import jotai from "../plugins/jotai/index.js";
+import keepAlive from "../plugins/keepAlive/index.js";
 const __dirname = import.meta.dirname;
 /**是否需要重新生成路由 */
 function needGenerateRoutes(path, srcDir = 'src') {
@@ -213,14 +214,16 @@ export default function FaeCore() {
                 faeConfig.plugins = [];
             if (faeConfig.model)
                 faeConfig.plugins.push(model);
-            if (faeConfig.keepAlive)
-                faeConfig.plugins.push(keepAlive);
+            if (faeConfig.reactActivation)
+                faeConfig.plugins.push(reactActivation);
             if (faeConfig.access)
                 faeConfig.plugins.push(access);
             if (faeConfig.atom)
                 faeConfig.plugins.push(atom);
             if (faeConfig.jotai)
                 faeConfig.plugins.push(jotai);
+            if (faeConfig.keepAlive)
+                faeConfig.plugins.push(keepAlive);
             const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = loadPlugins(faeConfig);
             // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
             const { port, base, publicDir, srcDir = 'src', outDir = 'dist', alias, open, proxy, chunkSizeWarningLimit } = faeConfig;

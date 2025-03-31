@@ -26,14 +26,16 @@ export interface FaeConfig {
     plugins?: Plugin[];
     /**是否启用model插件 */
     model?: boolean;
-    /**是否启用keepAlive插件 */
-    keepAlive?: boolean;
+    /**是否启用react-activation插件 */
+    reactActivation?: boolean;
     /**是否启用access插件 */
     access?: boolean;
     /**是否启用atom插件 */
     atom?: boolean;
     /**是否启用jotai插件 */
     jotai?: boolean;
+    /**是否启用keepAlive插件(仿react-activation自己的实现) */
+    keepAlive?: boolean;
 }
 /**添加临时文件方法参数 */
 export interface AddFileOptions {

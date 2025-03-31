@@ -1,46 +1,27 @@
 import { definePlugin } from '../../core/define'
 import { resolve } from 'path'
 
+const __dirname = import.meta.dirname
+
 export default definePlugin({
   name: 'fae-keep-alive',
   setup({
-    addExport,
     addEntryImport,
-    addPageConfigType,
-    addAppConfigType
+    addExport
   }) {
-    addPageConfigType({
-      specifier: ['KeepAlivePageConfig'],
-      source: resolve(import.meta.dirname, 'runtime')
-    })
-    addAppConfigType({
-      specifier: ['KeepAliveAppConfig'],
-      source: resolve(import.meta.dirname, 'runtime')
+    addEntryImport({ source: resolve(__dirname, 'fixContext') })
+    addExport({
+      specifier: 'AliveScope',
+      source: resolve(__dirname, 'aliveScope'),
     })
     addExport({
-      specifier: [
-        'KeepAlive',
-        'AliveScope',
-        'withActivation',
-        'useActivate',
-        'useUnactivate',
-        'useAliveController',
-        'withAliveScope'
-      ],
-      source: 'react-activation'
+      specifier: 'KeepAlive',
+      source: resolve(__dirname, 'keepAlive'),
     })
     addExport({
-      specifier: ['CachingNode'],
-      source: 'react-activation',
-      type: true
-    })
-    addExport({
-      specifier: ['useCachingNodes'],
-      source: resolve(import.meta.dirname, 'runtime')
-    })
-    addEntryImport({
-      source: resolve(import.meta.dirname, 'fixContext')
+      specifier: ['useAliveController', 'useActivate', 'useUnactivate'],
+      source: resolve(__dirname, 'context'),
     })
   },
-  runtime: resolve(import.meta.dirname, 'runtime.tsx')
+  // runtime: resolve(import.meta.dirname, 'runtime.tsx')
 })
