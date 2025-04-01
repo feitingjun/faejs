@@ -3,7 +3,7 @@ import { resolve } from 'path';
 const __dirname = import.meta.dirname;
 export default definePlugin({
     name: 'fae-keep-alive',
-    setup({ addEntryImport, addExport }) {
+    setup({ addEntryImport, addExport, addAppConfigType, addPageConfigType }) {
         addEntryImport({ source: resolve(__dirname, 'fixContext') });
         addExport({
             specifier: 'AliveScope',
@@ -17,7 +17,15 @@ export default definePlugin({
             specifier: ['useAliveController', 'useActivate', 'useUnactivate'],
             source: resolve(__dirname, 'context'),
         });
+        addAppConfigType({
+            specifier: ['KeepAliveAppTypes'],
+            source: resolve(__dirname, 'runtime')
+        });
+        addPageConfigType({
+            specifier: ['KeepAlivePageConfig'],
+            source: resolve(__dirname, 'runtime')
+        });
     },
-    // runtime: resolve(import.meta.dirname, 'runtime.tsx')
+    runtime: resolve(__dirname, 'runtime.tsx')
 });
 //# sourceMappingURL=index.js.map

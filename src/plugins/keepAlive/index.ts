@@ -7,7 +7,9 @@ export default definePlugin({
   name: 'fae-keep-alive',
   setup({
     addEntryImport,
-    addExport
+    addExport,
+    addAppConfigType,
+    addPageConfigType
   }) {
     addEntryImport({ source: resolve(__dirname, 'fixContext') })
     addExport({
@@ -22,6 +24,14 @@ export default definePlugin({
       specifier: ['useAliveController', 'useActivate', 'useUnactivate'],
       source: resolve(__dirname, 'context'),
     })
+    addAppConfigType({
+      specifier: ['KeepAliveAppTypes'],
+      source: resolve(__dirname, 'runtime')
+    })
+    addPageConfigType({
+      specifier: ['KeepAlivePageConfig'],
+      source: resolve(__dirname, 'runtime')
+    })
   },
-  // runtime: resolve(import.meta.dirname, 'runtime.tsx')
+  runtime: resolve(__dirname, 'runtime.tsx')
 })

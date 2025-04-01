@@ -1,16 +1,20 @@
-import { useRef, ReactNode, useContext, useEffect, useLayoutEffect, Context } from 'react'
-import { ScopeContext, BridgeContext, KeepAliveContext } from './context'
+import { useRef, ReactNode, useContext, useEffect, Context } from 'react'
+import { ScopeContext, BridgeContext } from './context'
 
 export class Activation {
   name: string
-  /**组件实例 */
-  instance: ReactNode
   /**组件dom */
   dom: HTMLElement | null = null
   /**组件是否激活 */
   active: boolean = false
   /**组件的props */
   props: Record<string, any> = {}
+  /**桥接的bridges列表 */
+  bridges: { context: Context<any>, value: any }[] = []
+  /**这个组件实际的容器 */
+  wrapper: HTMLDivElement|null = null
+  /**当前组件的children */
+  children: ReactNode|null = null
   /**激活监听器列表 */
   activateListeners: Set<() => void> = new Set()
   /**失活监听器列表 */
@@ -30,35 +34,14 @@ export class Activation {
     }
   }
   /**更新组件实例 */
-  render = (
+  update = (
     bridge: { context: Context<any>, value: any }[],
-    children:ReactNode,
+    children: ReactNode,
     wrapper: HTMLDivElement|null
   ) => {
-    // 加一层div用来获取实际的dom
-    const div = <div ref={dom => {
-      if(!dom) return
-      this.dom = dom
-      wrapper?.appendChild(dom)
-      if(!this.active) this.toggle(true)
-    }}>{children}</div>
-    // 加一层Provider用来给子级触发自定义的hooks
-    const providers = bridge.reduce((acc, { context, value }) => {
-      const Provider = context.Provider
-      return <Provider value={value}>{acc}</Provider>
-    }, div)
-    // 更新组件实例
-    this.instance = <KeepAliveContext.Provider key={this.name} value={{
-      addListener: (fn:() => void) => {
-        this.activateListeners.add(fn)
-        return () => this.activateListeners.delete(fn)
-      },
-      addDeactivateListener: (fn:() => void) => {
-        this.unactivateListeners.add(fn)
-        return () => this.unactivateListeners.delete(fn)
-      },
-    }}>{providers}</KeepAliveContext.Provider>
-    
+    this.children = children
+    this.wrapper = wrapper
+    this.bridges = bridge
   }
 }
 
@@ -67,10 +50,11 @@ export default function KeepAlive({
   children,
   ...props
 }: {
-  name: string,
+  name: string
   children: ReactNode
+  [prop: string]: any
 }) {
-  const keepRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const scope = useContext(ScopeContext)
   const bridge = useContext(BridgeContext)
   if(!scope) return children
@@ -78,8 +62,8 @@ export default function KeepAlive({
   useEffect(() => {
     let activation = getActivation(name) || new Activation(name)
     activation.props = props
-    activation.render(bridge, children, keepRef.current)
-    setActivation(activation)
+    activation.update(bridge, children, wrapperRef.current)
+    setActivation(activation) 
   }, bridge.map(v => v.value))
   /**
    * 不能使用useLayoutEffect
@@ -95,5 +79,5 @@ export default function KeepAlive({
       activation.toggle(false)
     }
   }, [])
-  return <div className='keep-alive' ref={keepRef} />
+  return <div className='ka-wrapper' ref={wrapperRef} />
 }

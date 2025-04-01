@@ -168,26 +168,15 @@ export const createApp = ({
   if(patchRoutes && typeof patchRoutes === 'function'){
     routes = patchRoutes(routes)
   }
-  /**
-   * react-router7 react-activation的AliveScope需要放在RouterProvider内部，所以在routes的最外面嵌套一层路由实现
-   * 并且keepAlive的内部不能存在Outlet(也就是说keepAlive只能在最末一级路由，layout不能使用keepAlive)，否则会死循环
-   */
-  routes = [{
-    path: '',
-    children: routes,
-    element: providers.reduce((acc, fn) => {
-      return createElement(fn, null, acc)
-    }, createElement(Outlet) as ReactElement)
-  }]
-
   // 创建router
   const router = createRouter(routes, { basename: '/' })
   // 创建RouterProvider
   let app:ReactNode = createElement(RouterProvider, { router })
+  
   // 向RouterProvider外层添加插件中的Provider
-  // app = providers.reduce((acc, fn) => {
-  //   return createElement(fn, null, acc)
-  // }, app)
+  app = providers.reduce((acc, fn) => {
+    return createElement(fn, null, acc)
+  }, app)
 
   // 向RouterProvider外层添加AppContextProvider
   app = createElement(AppContext.Provider, { value: {
