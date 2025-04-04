@@ -1,53 +1,41 @@
-import React, { ProviderProps, useContext } from 'react'
-import { ScopeContext, BridgeContext } from './context'
+import React, { Context } from 'react'
+import jsxRuntime from 'react/jsx-runtime'
+import jsxDevRuntime from 'react/jsx-dev-runtime'
+import { ScopeContext, KeepAliveContext } from './context'
 
-// const createReactContext = React.createContext
-const originalCreateElement = React.createElement
+/**储存所有的context */
+const fixedContext:Context<any>[] = []
+/**
+ * 缓存某个keepAlive第一次加载时获取到的fixedContext
+ * 因为fixedContext会随着加载的页面增多而增多，如果不缓存，
+ * 每次context的数量变更会导致keepAlive内的Bridge层级增加，从而导致缓存的页面卸载之后重新加载，
+ * 从而导致缓存失效
+*/
+const contextCaches = new Map<string, Context<any>[]>()
 
-// @ts-ignore
-React.createElement = function(type, props, ...children) {
-  if(typeof type === 'object' && type['$$typeof'] === Symbol.for('react.context')){
-    const OriginalProvider = type.Provider
-    /**
-     * 劫持Provider组件，给AliveScope组件内部的Provider包裹一层BridgeContext.Provider
-     * 用于逐级记录并传递keepAlive组件父级的context，然后在keepAlive组件重建上下文
-     * 以此修复keepAlive组件导致的context丢失问题
-     * */
-    const Provider = ({ value, ...props }:ProviderProps<any>) => {
-      const scope = useContext(ScopeContext)
-      const bridgeCtxs = useContext(BridgeContext)
-      if(!scope) return <OriginalProvider value={value} {...props} />
-      return <BridgeContext.Provider value={[...bridgeCtxs, { context: type, value }]}>
-        <OriginalProvider value={value} {...props} />
-      </BridgeContext.Provider>
-    }
-    Provider['$$typeof'] = Symbol.for('react.context')
-    type.Provider = Provider
+/**更加name获取fixedContext */
+export const getFixedContext = (name:string) => {
+  if(!contextCaches.has(name)){
+    contextCaches.set(name, [...fixedContext])
   }
-  return originalCreateElement(
-    type,
-    props,
-    ...children
-  )
+  return contextCaches.get(name)
 }
 
-// React.createContext = function<T>(value:T){
-//   const context = createReactContext(value)
-//   const OriginalProvider = context.Provider
-//   /**
-//    * 劫持Provider组件，给AliveScope组件内部的Provider包裹一层BridgeContext.Provider
-//    * 用于逐级记录并传递keepAlive组件父级的context，然后在keepAlive组件重建上下文
-//    * 以此修复keepAlive组件导致的context丢失问题
-//    * */
-//   const Provider = ({ value, ...props }:ProviderProps<T>) => {
-//     const scope = useContext(ScopeContext)
-//     const bridgeCtxs = useContext(BridgeContext)
-//     if(!scope) return <OriginalProvider value={value} {...props} />
-//     return <BridgeContext.Provider value={[...bridgeCtxs, { context, value }]}>
-//       <OriginalProvider value={value} {...props} />
-//     </BridgeContext.Provider>
-//   }
-//   Provider['$$typeof'] = Symbol.for('react.context')
-//   context.Provider = Provider
-//   return context
-// }
+function repair<T extends any>(mods:T, names:(keyof T)[]){
+  names.forEach(name => {
+    const oldFn = mods[name]
+    if(typeof oldFn !== 'function') return
+    mods[name] = function(type:any, ...args:any[]){
+      if(typeof type === 'object' && type['$$typeof'] === Symbol.for('react.context')){
+        if(![ScopeContext, KeepAliveContext].includes(type) && !fixedContext.includes(type)) {
+          fixedContext.push(type)
+        }
+      }
+      return oldFn(type, ...args)
+    } as T[keyof T]
+  })
+}
+
+repair(React, ['createElement'])
+repair(jsxRuntime, ['jsx', 'jsxs'])
+repair(jsxDevRuntime, ['jsxDEV'])

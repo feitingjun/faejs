@@ -38,7 +38,7 @@ export default function AliveScope ({
         cachingNodes: [...activationsRef.current]
       }}>
         {children}
-        <div className='ka-caches' style={{display: 'none'}}>{[...activationsRef.current.map(v => {
+        <div className='ka-caches'>{[...activationsRef.current.map(v => {
           return <Keeper key={v.name} activation={v} />
         })]}</div>
       </ScopeContext.Provider>

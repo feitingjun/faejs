@@ -1,7 +1,3 @@
-import { createApp } from '@faejs/app'
-import app from '{{srcDir}}/app'
-import manifest from './manifest'
-import runtimes from './runtime'
 {{#if imports.length}}
   {{~#each imports}}import
     {{~#if this.specifier}}
@@ -12,6 +8,10 @@ import runtimes from './runtime'
     {{~/if}} '{{this.source}}'
   {{/each}}
 {{/if}}
+import { createApp } from '@faejs/app'
+import app from '{{srcDir}}/app'
+import manifest from './manifest'
+import runtimes from './runtime'
 {{#if aheadCodes.length}}
 
   {{#each aheadCodes}}

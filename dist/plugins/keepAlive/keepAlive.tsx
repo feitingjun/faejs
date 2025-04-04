@@ -1,10 +1,16 @@
-import { useRef, ReactNode, useContext, useEffect, Context } from 'react'
-import { ScopeContext, BridgeContext } from './context'
+import { useRef, ReactNode, useContext, useEffect, Context, ReactElement, cloneElement } from 'react'
+import { ScopeContext } from './context'
+import { getFixedContext } from './fixContext'
+
+interface Bridge<T=any> {
+  context: Context<T>,
+  value: T
+}
 
 export class Activation {
   name: string
-  /**组件dom */
-  dom: HTMLElement | null = null
+  /**组件的dom */
+  dom: HTMLDivElement|null = null
   /**组件是否激活 */
   active: boolean = false
   /**组件的props */
@@ -33,7 +39,7 @@ export class Activation {
       this.unactivateListeners.forEach(fn => fn())
     }
   }
-  /**更新组件实例 */
+  /**更新组件 */
   update = (
     bridge: { context: Context<any>, value: any }[],
     children: ReactNode,
@@ -45,26 +51,28 @@ export class Activation {
   }
 }
 
-export default function KeepAlive({
+function Wrapper({
   name,
   children,
+  bridges,
   ...props
 }: {
   name: string
   children: ReactNode
+  bridges: Bridge[]
   [prop: string]: any
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const scope = useContext(ScopeContext)
-  const bridge = useContext(BridgeContext)
   if(!scope) return children
   const { getActivation, setActivation } = scope
   useEffect(() => {
     let activation = getActivation(name) || new Activation(name)
     activation.props = props
-    activation.update(bridge, children, wrapperRef.current)
-    setActivation(activation) 
-  }, bridge.map(v => v.value))
+    activation.update(bridges, children, wrapperRef.current)
+    setActivation(activation)
+    if(!activation.active) activation.toggle(true)
+  }, bridges.map(v => v.value))
   /**
    * 不能使用useLayoutEffect
    * 由于完全卸载缓存时，当前组件useLayoutEffect的return函数会在useUnactivate内useLayoutEffect的return函数之前执行，
@@ -80,4 +88,23 @@ export default function KeepAlive({
     }
   }, [])
   return <div className='ka-wrapper' ref={wrapperRef} />
+}
+
+const Bridge = ({children, bridges, ctx}:{children: ReactElement<{bridges:Bridge[]}>, bridges: Bridge[], ctx: Context<any>}) => {
+  const value = useContext(ctx)
+  return cloneElement(children, { bridges: [{ context: ctx, value }, ...bridges] })
+}
+
+export default function KeepAlive({
+  name,
+  children,
+  ...props
+}:{
+  name: string
+  children: ReactNode
+  [prop: string]: any
+}){
+  return getFixedContext(name)!.reduce((prev, ctx) => {
+    return <Bridge bridges={prev.props.bridges} ctx={ctx}>{prev}</Bridge> 
+  }, <Wrapper bridges={[]} name={name} {...props}>{children}</Wrapper>)
 }
