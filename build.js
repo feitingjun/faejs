@@ -1,6 +1,7 @@
 import ts from 'typescript'
 import fs from 'fs'
 import { dirname, extname, resolve, join } from 'path'
+import { globSync } from 'glob'
 
 /**
  * 判断是否需要添加后缀
@@ -20,15 +21,8 @@ const needAddSuffix = (dir, libname) => {
 
 // 递归遍历入口
 const getEntry = (dir) => {
-  const files = fs.readdirSync(dir)
-  const entry = []
-  files.forEach(v => {
-    const path = `${dir}/${v}`
-    if (fs.statSync(path).isDirectory()) {
-      entry.push(...getEntry(path))
-    } else if (extname(path) === '.ts' || extname(path) === '.js') {
-      entry.push(path)
-    }
+  const entry = globSync(`${dir}/**/*.ts`, {
+    cwd: process.cwd()
   })
   return entry
 }
@@ -45,7 +39,6 @@ function copyNonTsFiles(srcDir, outDir) {
       }
       copyNonTsFiles(fullPath, outPath);
     } else if (extname(fullPath) !== '.ts') {
-      // 只复制非.ts 文件
       fs.copyFileSync(fullPath, outPath);
     }
   });
@@ -57,8 +50,9 @@ const build = () => {
   const tsconfig = ts.readConfigFile('tsconfig.json', ts.sys.readFile).config
   // 将tsconfig.json内容解析为ts.createProgram配置
   const options = ts.parseJsonConfigFileContent(tsconfig, ts.sys, import.meta.dirname).options
+  const entrys = getEntry('src')
   const program = ts.createProgram({
-    rootNames: getEntry('src'),
+    rootNames: entrys,
     options
   })
   program.emit(undefined, undefined, undefined, undefined, {
@@ -96,7 +90,7 @@ const build = () => {
             }
           }
           // 给 import('x') 这种格式添加后缀名
-          if(ts.isCallExpression(node) && node.arguments?.[0] && ts.isStringLiteral(node.arguments[0]) && node.expression.getText() === 'import') {
+          if(ts.isCallExpression(node) && node.arguments?.[0] && ts.isStringLiteral(node.arguments[0]) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
             const ext = needAddSuffix(dir, node.arguments[0].text)
             if(ext){
               return ts.factory.updateCallExpression(
