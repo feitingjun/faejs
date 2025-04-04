@@ -10,18 +10,12 @@ export default function Keeper ({
   const div = (
     <div data-ka={at.name}>
       <div className={'ka-alive'} ref={dom => {
-        console.log(at.name, dom)
-        if(!dom){
-          at.dom?.remove()
-          at.dom = null
-          return
-        }
-        at.wrapper?.appendChild(dom)
+        dom ? at.wrapper?.appendChild(dom) : at.dom?.remove()
         at.dom = dom
       }}>{at.children}</div>
     </div>
   )
-  
+
   // 重建桥接的context
   const providers= at.bridges.reduce((acc, b) => {
     const Provider = b.context.Provider
