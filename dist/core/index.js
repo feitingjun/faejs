@@ -96,10 +96,10 @@ async function watchRoutes(server, event, path, srcDir = 'src') {
     path = relative(process.cwd(), path);
     // 用户配置变更后重启服务器
     if (path === '.faerc.ts') {
-        console.log(chalk.green('.faerc.ts 文件变更，服务器重启中...'));
+        console.log('.faerc.ts 文件变更，服务器重启中...');
         return server.restart(true).then(() => {
             const port = server.config.server.port;
-            console.log(chalk.blue('服务器重启成功'));
+            console.log('服务器重启成功');
             console.log(`  - Local: ${chalk.green(`http://localhost:${port}`)}`);
             console.log(`  - Network: ${chalk.green(`http://${getLocalIp()}:${port}`)}\n`);
         });
@@ -199,6 +199,21 @@ function loadPlugins(faeConfig) {
         watchers
     };
 }
+async function getHtmlTemplate(srcDir, fileName) {
+    let temp = resolve(process.cwd(), srcDir, 'document.tsx');
+    if (!existsSync(temp)) {
+        temp = resolve(__dirname, '..', 'template', 'document.tsx');
+    }
+    const module = (await dynamicImport(temp)).default;
+    // 将document.tsx模版转换为html字符串
+    return renderToString(createElement(module, {
+        entry: createElement('script', {
+            type: 'module',
+            key: 'entry',
+            src: fileName
+        })
+    }));
+}
 /**vite插件，负责解析.faerc.ts配置，生成约定式路由，以及提供fae插件功能*/
 export default function FaeCore() {
     let faeConfig = {};
@@ -245,40 +260,30 @@ export default function FaeCore() {
                     runtimes
                 }
             });
-            // 合并开发配置
-            if (!config.server)
-                config.server = {};
-            if (port)
-                config.server.port = port;
-            if (open)
-                config.server.open = open;
-            if (base)
-                config.base = base;
-            if (!config.server.fs)
-                config.server.fs = {};
-            if (publicDir)
-                config.publicDir = publicDir;
-            if (!config.resolve)
-                config.resolve = {};
-            if (!config.resolve.alias)
-                config.resolve.alias = {};
-            config.resolve.alias = {
-                ...config.resolve.alias,
-                '@': resolve(process.cwd(), srcDir.split('/')[0]),
-                'fae': resolve(process.cwd(), srcDir, '.fae'),
-                // 入口文件的别名(避免config.root不是项目根目录时无法正确找到入口文件的路径)
-                '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx'),
-                ...alias ?? {}
+            // 返回的配置将与原有的配置深度合并
+            return {
+                server: { port, open },
+                base,
+                outDir,
+                publicDir,
+                resolve: {
+                    alias: {
+                        '@': resolve(process.cwd(), srcDir.split('/')[0]),
+                        'fae': resolve(process.cwd(), srcDir, '.fae'),
+                        '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx'),
+                        ...alias ?? {}
+                    }
+                },
+                proxy,
+                build: {
+                    chunkSizeWarningLimit,
+                    rollupOptions: {
+                        input: {
+                            fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
+                        }
+                    }
+                }
             };
-            if (proxy)
-                config.server.proxy = proxy;
-            // 合并打包配置
-            if (!config.build)
-                config.build = {};
-            if (outDir)
-                config.build.outDir = outDir;
-            if (chunkSizeWarningLimit)
-                config.build.chunkSizeWarningLimit = chunkSizeWarningLimit;
         },
         configureServer: (server) => {
             const srcDir = faeConfig.srcDir;
@@ -291,19 +296,8 @@ export default function FaeCore() {
                 if (req.headers.accept?.includes('text/html') &&
                     !req.url?.startsWith('/@vite') &&
                     !req.url?.includes('.')) {
-                    let temp = resolve(process.cwd(), faeConfig.srcDir, 'document.tsx');
-                    if (!existsSync(temp)) {
-                        temp = resolve(__dirname, '..', 'template', 'document.tsx');
-                    }
-                    const module = (await dynamicImport(temp)).default;
-                    // 将document.tsx模版转换为html字符串
-                    let html = renderToString(createElement(module, {
-                        // 这儿的./fae.tsx是在alias中配置的别名
-                        entry: createElement('script', {
-                            type: 'module',
-                            src: './fae.tsx'
-                        })
-                    }));
+                    // 这儿的/fae.tsx是在alias中配置的别名
+                    let html = await getHtmlTemplate(faeConfig.srcDir, '/fae.tsx');
                     // 将html交给vite处理(必须，否则热更新等功能无法使用且会报错)
                     html = await server.transformIndexHtml(req.url, html);
                     res.setHeader('Content-Type', 'text/html');
@@ -313,6 +307,13 @@ export default function FaeCore() {
                     next();
                 }
             });
+        },
+        writeBundle: async (options, bundle) => {
+            const fileName = Object.values(bundle).find(v => 'isEntry' in v && v.isEntry).fileName;
+            if (!fileName)
+                return;
+            const html = await getHtmlTemplate(faeConfig.srcDir, fileName);
+            writeFileSync(resolve(options.dir, 'index.html'), html);
         }
     };
 }

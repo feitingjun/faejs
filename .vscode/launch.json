@@ -20,6 +20,13 @@
       "cwd": "${workspaceFolder}/my-app",
       "program": "${workspaceFolder}/dist/bin/index.js",
       "args": ["dev"]
+    }, {
+      "name": "Build命令调试",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/my-app",
+      "program": "${workspaceFolder}/dist/bin/index.js",
+      "args": ["build"]
     }
   ]
 }

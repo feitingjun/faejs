@@ -2,6 +2,7 @@
 import { Command } from 'commander'
 import dev from './dev'
 import create from './create'
+import build from './build'
 
 const program = new Command()
 
@@ -14,5 +15,10 @@ program
 program
 .command('dev')
 .action(() => dev())
+
+/**打包项目 */
+program
+.command('build')
+.action(() => build())
 
 program.parse(process.argv)
