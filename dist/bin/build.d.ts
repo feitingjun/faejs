@@ -1,1 +1,1 @@
-export default function build(): Promise<void>;
+export default function buildApp(): Promise<void>;
