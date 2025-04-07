@@ -137,6 +137,14 @@ export function wirteRuntime(outDir: string, runtimes?: string[]){
   })
 }
 
+/**写入.fae/typings.d.ts */
+export function wirteTypings(outDir: string){
+  renderHbsTpl({
+    sourcePath: resolve(TML_DIR, 'typings.d.ts.hbs'),
+    outPath: resolve(outDir, 'typings.d.ts'),
+  })
+}
+
 /**创建临时文件夹 */
 export function createTmpDir({ root, srcDir, options }:{
   root:string
@@ -171,4 +179,6 @@ export function createTmpDir({ root, srcDir, options }:{
   writeFaeRoutesTs(outDir, manifest)
   // 创建.fae/runtime.tsx
   wirteRuntime(outDir, runtimes)
+  // 创建.fae/typings.d.ts
+  wirteTypings(outDir)
 }

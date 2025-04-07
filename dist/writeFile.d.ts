@@ -25,6 +25,8 @@ export declare function writeFaeDefineTs(outDir: string): void;
 export declare function writeFaeRoutesTs(outDir: string, manifest: RouteManifest): void;
 /**写入.fae/runtimes.ts */
 export declare function wirteRuntime(outDir: string, runtimes?: string[]): void;
+/**写入.fae/typings.d.ts */
+export declare function wirteTypings(outDir: string): void;
 /**创建临时文件夹 */
 export declare function createTmpDir({ root, srcDir, options }: {
     root: string;

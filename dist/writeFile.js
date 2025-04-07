@@ -111,6 +111,13 @@ export function wirteRuntime(outDir, runtimes) {
         data: { runtimes }
     });
 }
+/**写入.fae/typings.d.ts */
+export function wirteTypings(outDir) {
+    renderHbsTpl({
+        sourcePath: resolve(TML_DIR, 'typings.d.ts.hbs'),
+        outPath: resolve(outDir, 'typings.d.ts'),
+    });
+}
 /**创建临时文件夹 */
 export function createTmpDir({ root, srcDir, options }) {
     const { manifest = {}, pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes } = options;
@@ -132,5 +139,7 @@ export function createTmpDir({ root, srcDir, options }) {
     writeFaeRoutesTs(outDir, manifest);
     // 创建.fae/runtime.tsx
     wirteRuntime(outDir, runtimes);
+    // 创建.fae/typings.d.ts
+    wirteTypings(outDir);
 }
 //# sourceMappingURL=writeFile.js.map

@@ -5,7 +5,7 @@ import { globSync } from 'glob';
 import { createElement } from 'react';
 import { dynamicImport, debounce, chalk, getLocalIp } from "../utils.js";
 import { renderHbsTpl } from "../hbs.js";
-import { createTmpDir, writeFaeRoutesTs } from "../writeFile.js";
+import { createTmpDir, writeEntryTsx, writeFaeRoutesTs } from "../writeFile.js";
 import model from "../plugins/model/index.js";
 import reactActivation from "../plugins/reactActivation/index.js";
 import access from "../plugins/access/index.js";
@@ -214,14 +214,45 @@ async function getHtmlTemplate(srcDir, fileName) {
         })
     }));
 }
+/**加载全局样式文件 */
+function loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers }) {
+    // 判断是否存在global.less文件
+    const globalStyle = globSync(`${srcDir}/global.{less,scss,css}`, { cwd: process.cwd() });
+    if (globalStyle && globalStyle.length > 0) {
+        imports.push({ source: `${process.cwd()}/${globalStyle[0]}` });
+    }
+    // 添加一个监听global.less增删的监听器
+    watchers.push((event, path) => {
+        const reg = new RegExp(`^${process.cwd()}/${srcDir}/global.(less|scss|css)$`);
+        if (!reg.test(path))
+            return;
+        if (event === 'add') {
+            imports.push({ source: path });
+            writeEntryTsx(resolve(process.cwd(), srcDir, '.fae'), {
+                imports,
+                aheadCodes,
+                tailCodes
+            });
+        }
+        else if (event === 'unlink') {
+            imports.splice(imports.findIndex(v => v.source === path), 1);
+            writeEntryTsx(resolve(process.cwd(), srcDir, '.fae'), {
+                imports,
+                aheadCodes,
+                tailCodes
+            });
+        }
+    });
+}
 /**vite插件，负责解析.faerc.ts配置，生成约定式路由，以及提供fae插件功能*/
-export default function FaeCore() {
+export default async function FaeCore() {
     let faeConfig = {};
     let watchers = [];
     return {
         name: 'fae-core',
         enforce: 'pre',
         config: async (config) => {
+            // 用户配置文件变更时重置
             watchers = [];
             faeConfig = (await dynamicImport(`${process.cwd()}/.faerc.ts`)).default;
             // 添加默认插件
@@ -245,6 +276,7 @@ export default function FaeCore() {
             faeConfig.srcDir = srcDir;
             faeConfig.outDir = outDir;
             watchers = pluginWatchers;
+            loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers });
             // 创建临时文件夹
             createTmpDir({
                 root: process.cwd(),
