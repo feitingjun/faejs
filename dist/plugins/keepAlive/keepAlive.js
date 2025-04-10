@@ -1,6 +1,6 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { useRef, useContext, useEffect, cloneElement } from 'react';
-import { ScopeContext } from "./context.js";
+import { useRef, useContext, useEffect, cloneElement, useLayoutEffect } from 'react';
+import { ScopeContext, useActivate, useUnactivate } from "./context.js";
 import { getFixedContext } from "./fixContext.js";
 export class Activation {
     name;
@@ -14,6 +14,8 @@ export class Activation {
     bridges = [];
     /**这个组件实际的容器 */
     wrapper = null;
+    /**滚动位置缓存 */
+    scroll = new Map();
     /**当前组件的children */
     children = null;
     /**激活监听器列表 */
@@ -29,6 +31,10 @@ export class Activation {
     toggle = (active) => {
         this.active = active;
         if (active) {
+            setTimeout(() => {
+                this.restoreScroll(this.dom);
+                this.scroll.clear();
+            }, 10);
             this.activateListeners.forEach(fn => fn());
         }
         else {
@@ -40,6 +46,38 @@ export class Activation {
         this.children = children;
         this.wrapper = wrapper;
         this.bridges = bridge;
+    };
+    /**保存滚动位置 */
+    saveScroll = (ele) => {
+        if (!ele)
+            return;
+        this.scroll.set(ele, {
+            x: ele.scrollLeft,
+            y: ele.scrollTop
+        });
+        if (ele.childNodes.length > 0) {
+            ele.childNodes.forEach(child => {
+                if (child instanceof HTMLElement) {
+                    this.saveScroll(child);
+                }
+            });
+        }
+    };
+    /**恢复滚动位置 */
+    restoreScroll = (ele) => {
+        if (!ele)
+            return;
+        const scroll = this.scroll.get(ele);
+        if (scroll) {
+            ele.scrollTo(scroll.x, scroll.y);
+        }
+        if (ele.childNodes.length > 0) {
+            ele.childNodes.forEach(child => {
+                if (child instanceof HTMLElement) {
+                    this.restoreScroll(child);
+                }
+            });
+        }
     };
 }
 function Wrapper({ name, children, bridges, ...props }) {
@@ -71,6 +109,30 @@ function Wrapper({ name, children, bridges, ...props }) {
             activation.toggle(false);
         };
     }, []);
+    // 在组件卸载前保存滚动位置
+    useLayoutEffect(() => {
+        return () => {
+            const activation = getActivation(name);
+            if (!activation)
+                return;
+            activation.saveScroll(activation.dom);
+        };
+    }, []);
+    /**如果存在父级keepAlive，因为父级被缓存，会导致当前的useEffect不会触发，
+     * 所以使用useActivate和useUnactivate触发当前keepAlive的状态变更
+     * */
+    useActivate(() => {
+        const activation = getActivation(name);
+        if (!activation)
+            return;
+        activation.toggle(true);
+    });
+    useUnactivate(() => {
+        const activation = getActivation(name);
+        if (!activation)
+            return;
+        activation.toggle(false);
+    });
     return _jsx("div", { className: 'ka-wrapper', ref: wrapperRef });
 }
 const Bridge = ({ children, bridges, ctx }) => {
@@ -78,6 +140,9 @@ const Bridge = ({ children, bridges, ctx }) => {
     return cloneElement(children, { bridges: [{ context: ctx, value }, ...bridges] });
 };
 export default function KeepAlive({ name, children, ...props }) {
+    const scope = useContext(ScopeContext);
+    if (!scope)
+        return children;
     return getFixedContext(name).reduce((prev, ctx) => {
         return _jsx(Bridge, { bridges: prev.props.bridges, ctx: ctx, children: prev });
     }, _jsx(Wrapper, { bridges: [], name: name, ...props, children: children }));

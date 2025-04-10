@@ -21,7 +21,7 @@ const needAddSuffix = (dir, libname) => {
 
 // 递归遍历入口
 const getEntry = (dir) => {
-  const entry = globSync(`${dir}/**/*.ts`, {
+  const entry = globSync(`${dir}/**/*.ts{,x}`, {
     cwd: process.cwd()
   })
   return entry
@@ -38,7 +38,7 @@ function copyNonTsFiles(srcDir, outDir) {
         fs.mkdirSync(outPath, { recursive: true });
       }
       copyNonTsFiles(fullPath, outPath);
-    } else if (extname(fullPath) !== '.ts') {
+    } else if (!['.ts', '.tsx'].includes(extname(fullPath))) {
       fs.copyFileSync(fullPath, outPath);
     }
   });
@@ -53,7 +53,7 @@ const build = () => {
   const entrys = getEntry('src')
   const program = ts.createProgram({
     rootNames: entrys,
-    options
+    options: { ...options, sourceMap: process.argv.includes('-d') ? options.sourceMap : false }
   })
   program.emit(undefined, undefined, undefined, undefined, {
     after: [(ctx) => {
@@ -110,6 +110,10 @@ const build = () => {
   })
   copyNonTsFiles('src', 'dist')
   console.log(`\x1b[32m构建成功\x1b[0m`)
+}
+
+if(!process.argv.includes('-d')){
+  fs.rmdirSync('dist', { recursive: true })
 }
 build()
 if (process.argv.includes('--watch') || process.argv.includes('-w')) {

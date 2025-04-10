@@ -32,7 +32,7 @@ function generateRouteManifest(src = 'src') {
     // 获取全局layout
     const rootLayout = globSync('layout{s,}{/index,}.tsx', { cwd: srcDir });
     // 获取所有页面
-    const include = ['**/{*.,}page.tsx', '**/{*.,}layout.tsx', '**/layout/index.tsx'];
+    const include = ['**/{*.,}page.tsx', '**/{*.,}layout.tsx', '**/layout/index.tsx', '**/404{/index,}.tsx'];
     const ignore = ['**/layout/**/*{[^/],}page.tsx', '**/layout/**/layout.tsx'];
     const pages = globSync(include, { cwd: resolve(srcDir, pageDir), ignore });
     // 获取id和文件的映射
@@ -202,7 +202,7 @@ function loadPlugins(faeConfig) {
 async function getHtmlTemplate(srcDir, fileName) {
     let temp = resolve(process.cwd(), srcDir, 'document.tsx');
     if (!existsSync(temp)) {
-        temp = resolve(__dirname, '..', 'template', 'document.tsx');
+        temp = resolve(__dirname, '..', 'template', 'document.js');
     }
     const module = (await dynamicImport(temp)).default;
     // 将document.tsx模版转换为html字符串

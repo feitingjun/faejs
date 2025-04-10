@@ -42,5 +42,5 @@ export default definePlugin({
       source: resolve(import.meta.dirname, 'fixContext')
     })
   },
-  runtime: resolve(import.meta.dirname, 'runtime.tsx')
+  runtime: resolve(import.meta.dirname, 'runtime')
 })

@@ -26,6 +26,6 @@ export default definePlugin({
             source: resolve(__dirname, 'runtime')
         });
     },
-    runtime: resolve(__dirname, 'runtime.tsx')
+    runtime: resolve(__dirname, 'runtime')
 });
 //# sourceMappingURL=index.js.map

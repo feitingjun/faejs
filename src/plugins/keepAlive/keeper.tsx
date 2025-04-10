@@ -6,10 +6,13 @@ export default function Keeper ({
 }: {
   activation: Activation
 }) {
-  // 多加一层div是为了让组件在卸载后能正确的销毁，不然会报错
+  /**
+   * 第一层一层div是为了让组件在卸载后能正确的销毁，不然会报错
+   * 第二次div是为了防止children的根节点不是实际的dom，不能正确的操作dom
+   */
   const div = (
     <div data-ka={at.name}>
-      <div className={'ka-alive'} ref={dom => {
+      <div className='ka-alive' ref={dom => {
         dom ? at.wrapper?.appendChild(dom) : at.dom?.remove()
         at.dom = dom
       }}>{at.children}</div>

@@ -1,4 +1,4 @@
-import { ReactNode, Context } from 'react';
+import { ReactNode, Context, ReactElement } from 'react';
 export declare class Activation {
     name: string;
     /**组件的dom */
@@ -14,6 +14,11 @@ export declare class Activation {
     }[];
     /**这个组件实际的容器 */
     wrapper: HTMLDivElement | null;
+    /**滚动位置缓存 */
+    scroll: Map<HTMLElement, {
+        x: number;
+        y: number;
+    }>;
     /**当前组件的children */
     children: ReactNode | null;
     /**激活监听器列表 */
@@ -28,9 +33,13 @@ export declare class Activation {
         context: Context<any>;
         value: any;
     }[], children: ReactNode, wrapper: HTMLDivElement | null) => void;
+    /**保存滚动位置 */
+    saveScroll: (ele: HTMLElement | null) => void;
+    /**恢复滚动位置 */
+    restoreScroll: (ele: HTMLElement | null) => void;
 }
 export default function KeepAlive({ name, children, ...props }: {
     name: string;
     children: ReactNode;
     [prop: string]: any;
-}): import("react/jsx-runtime").JSX.Element;
+}): string | number | bigint | boolean | Iterable<ReactNode> | Promise<string | number | bigint | boolean | import("react").ReactPortal | ReactElement<unknown, string | import("react").JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | import("react/jsx-runtime").JSX.Element | null | undefined;

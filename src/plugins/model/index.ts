@@ -45,5 +45,5 @@ export default definePlugin({
       }
     })
   },
-  runtime: resolve(import.meta.dirname, 'runtime.tsx')
+  runtime: resolve(import.meta.dirname, 'runtime')
 })
