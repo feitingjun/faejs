@@ -1,6 +1,6 @@
-import { ReactNode, useRef, useState, Fragment } from 'react'
+import { ReactNode, useState, Fragment, useRef } from 'react'
 import { ScopeContext } from './context'
-import { Activation } from './keepAlive'
+import Activation from './activation'
 import Keeper from './keeper'
 
 export default function AliveScope ({
@@ -8,38 +8,30 @@ export default function AliveScope ({
 }:{
   children: ReactNode
 }) {
-  // 使用useRef而不是useState是为了防止getActivation等方法在useEffect内使用时获取的值不是最新的
-  // 而useEffect依赖getActivation容易导致死循环
-  const activationsRef = useRef<Activation[]>([])
-  const [count, setCount] = useState(0)
-  const forceUpdate = () => setCount(count + 1)
+  const actives = useRef<Map<string, Activation>>(new Map())
+  const [ names, setNames ] = useState<string[]>([])
   return (
     <Fragment>
       <ScopeContext.Provider value={{
-        getActivation: name => activationsRef.current.find(v => v.name === name),
-        setActivation: activation => {
-          const index = activationsRef.current.findIndex(v => v.name === activation.name)
-          if (index === -1) {
-            activationsRef.current.push(activation)
-          } else {
-            activationsRef.current[index] = activation
-          }
-          forceUpdate()
+        addActivation: at => {
+          actives.current.set(at.name, at)
+          setNames([...names, at.name])
         },
+        getActivation: name => actives.current.get(name),
         destroy: name => {
-          if (typeof name === 'string') name = [name]
-          activationsRef.current = activationsRef.current.filter(v => !name.includes(v.name))
-          forceUpdate()
+          if(typeof name === 'string') name = [name]
+          setNames(names.filter(v => !name.includes(v)))
+          name.forEach(v => actives.current.delete(v))
         },
         destroyAll: () => {
-          activationsRef.current = []
-          forceUpdate()
+          setNames([])
+          actives.current.clear()
         },
-        cachingNodes: [...activationsRef.current]
+        cachingNodes: names.map(v => ({...actives.current.get(v)!}))
       }}>
         {children}
-        <div className='ka-caches'>{[...activationsRef.current.map(v => {
-          return <Keeper key={v.name} activation={v} />
+        <div className='ka-caches'>{[...names.map(v => {
+          return <Keeper key={v} name={v} />
         })]}</div>
       </ScopeContext.Provider>
     </Fragment>

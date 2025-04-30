@@ -15,7 +15,7 @@ export default definePlugin({
         });
         addExport({
             specifier: ['useAliveController', 'useActivate', 'useUnactivate'],
-            source: resolve(__dirname, 'context'),
+            source: resolve(__dirname, 'hooks'),
         });
         addAppConfigType({
             specifier: ['KeepAliveAppTypes'],

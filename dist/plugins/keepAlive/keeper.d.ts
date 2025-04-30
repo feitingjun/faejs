@@ -1,4 +1,4 @@
-import { Activation } from './keepAlive';
-export default function Keeper({ activation: at }: {
-    activation: Activation;
-}): import("react/jsx-runtime").JSX.Element;
+declare const _default: import("react").MemoExoticComponent<({ name }: {
+    name: string;
+}) => import("react/jsx-runtime").JSX.Element>;
+export default _default;

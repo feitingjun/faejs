@@ -1,14 +1,38 @@
 import { jsx as _jsx } from "react/jsx-runtime";
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { KeepAliveContext } from "./context.js";
-export default function Keeper({ activation: at }) {
+import { useActive } from "./hooks.js";
+const useLoadedEffect = (fn, deps) => {
+    const loaded = useRef(false);
+    useEffect(() => {
+        if (loaded.current)
+            fn();
+        else
+            loaded.current = true;
+    }, deps);
+};
+export default memo(({ name }) => {
+    // 获取最新的Active实例
+    const at = useActive(name);
+    useLoadedEffect(() => {
+        if (at.active) {
+            at.activateListeners.forEach(fn => fn());
+            at.restoreScroll(at.dom);
+        }
+        else {
+            at.unactivateListeners.forEach(fn => fn());
+        }
+    }, [at.active]);
     /**
-     * 第一层一层div是为了让组件在卸载后能正确的销毁，不然会报错
-     * 第二次div是为了防止children的根节点不是实际的dom，不能正确的操作dom
+     * 路由变更时，因为bridges内有路由相关的context会导致组件重新渲染
+     * 这种情况不能重新创建div，会因为时机问题导致无法正确的获取at.dom的滚动条位置
      */
-    const div = (_jsx("div", { "data-ka": at.name, children: _jsx("div", { className: 'ka-alive', ref: dom => {
-                dom ? at.wrapper?.appendChild(dom) : at.dom?.remove();
-                at.dom = dom;
-            }, children: at.children }) }));
+    const div = useMemo(() => {
+        return (_jsx("div", { "data-ka": at.name, children: _jsx("div", { className: 'ka-alive', ref: dom => {
+                    dom ? at.wrapper?.appendChild(dom) : at.dom?.remove();
+                    at.dom = dom;
+                }, children: at.children }) }));
+    }, [at.active, at.children]);
     // 重建桥接的context
     const providers = at.bridges.reduce((acc, b) => {
         const Provider = b.context.Provider;
@@ -25,5 +49,5 @@ export default function Keeper({ activation: at }) {
                 return () => at.unactivateListeners.delete(fn);
             },
         }, children: providers });
-}
+});
 //# sourceMappingURL=keeper.js.map
