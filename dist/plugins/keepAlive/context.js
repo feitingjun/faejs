@@ -5,7 +5,7 @@ export const BridgeContext = createContext([]);
 export const ScopeContext = createContext(null);
 /**KeepAlive的context，用来给响应自己的激活/失活hooks */
 export const KeepAliveContext = createContext({
-    addListener: () => () => { },
-    addDeactivateListener: () => () => { }
+    addActiveListener: () => () => { },
+    addUnactiveListener: () => () => { }
 });
 //# sourceMappingURL=context.js.map

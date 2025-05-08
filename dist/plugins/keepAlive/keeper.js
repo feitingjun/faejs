@@ -1,7 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { KeepAliveContext } from "./context.js";
-import { useActive } from "./hooks.js";
+import { useActivation } from "./hooks.js";
 const useLoadedEffect = (fn, deps) => {
     const loaded = useRef(false);
     useEffect(() => {
@@ -12,8 +12,8 @@ const useLoadedEffect = (fn, deps) => {
     }, deps);
 };
 export default memo(({ name }) => {
-    // 获取最新的Active实例
-    const at = useActive(name);
+    // 获取最新的Activation实例
+    const at = useActivation(name);
     useLoadedEffect(() => {
         if (at.active) {
             at.activateListeners.forEach(fn => fn());
@@ -38,13 +38,13 @@ export default memo(({ name }) => {
         const Provider = b.context.Provider;
         return _jsx(Provider, { value: b.value, children: acc });
     }, div);
-    // 为子组件提供激活/失活监听hooks的content
+    // 为子组件提供激活/失活监听hooks的context
     return _jsx(KeepAliveContext.Provider, { value: {
-            addListener: fn => {
+            addActiveListener: fn => {
                 at.activateListeners.add(fn);
                 return () => at.activateListeners.delete(fn);
             },
-            addDeactivateListener(fn) {
+            addUnactiveListener(fn) {
                 at.unactivateListeners.add(fn);
                 return () => at.unactivateListeners.delete(fn);
             },

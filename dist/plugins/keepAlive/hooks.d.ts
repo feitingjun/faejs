@@ -1,4 +1,4 @@
-export declare const useActive: (name: string) => import("./activation").default;
+export declare const useActivation: (name: string) => import("./activation").default;
 /**获取操作缓存的api */
 export declare const useAliveController: () => {
     destroy: (name: string | string[]) => void;

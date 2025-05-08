@@ -20,6 +20,6 @@ export declare const ScopeContext: Context<{
 } | null>;
 /**KeepAlive的context，用来给响应自己的激活/失活hooks */
 export declare const KeepAliveContext: Context<{
-    addListener: (fn: () => void) => () => void;
-    addDeactivateListener: (fn: () => void) => () => void;
+    addActiveListener: (fn: () => void) => () => void;
+    addUnactiveListener: (fn: () => void) => () => void;
 }>;

@@ -9,6 +9,7 @@ function Wrapper(props: {
   bridges: Bridge[]
   [prop: string]: any
 }) {
+  
   const { name, children, bridges, ...args } = props
   const wrapperRef = useRef<HTMLDivElement>(null)
   const scope = useContext(ScopeContext)

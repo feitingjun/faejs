@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState, useContext } from 'react';
 import { ScopeContext } from "./context.js";
 import { KeepAliveContext } from "./context.js";
-export const useActive = (name) => {
+export const useActivation = (name) => {
     /**
      * 为了在Active变更时触发组件更新
      * 不能使用useSyncExternalStore，因为只是Active的属性变更，而不是Active的引用变更，
@@ -31,9 +31,9 @@ export const useAliveController = () => {
 };
 /**激活时执行的hooks */
 export const useActivate = (fn) => {
-    const { addListener } = useContext(KeepAliveContext);
+    const { addActiveListener } = useContext(KeepAliveContext);
     useLayoutEffect(() => {
-        const removeListener = addListener(fn);
+        const removeListener = addActiveListener(fn);
         return () => removeListener();
     }, [fn]);
 };
@@ -41,9 +41,9 @@ export const useActivate = (fn) => {
  * 缓存完全卸载时没有办法触发，因为如果卸载时处于失活状态时，没办法触发KeepAlive组件的useEffect
  */
 export const useUnactivate = (fn) => {
-    const { addDeactivateListener } = useContext(KeepAliveContext);
+    const { addUnactiveListener } = useContext(KeepAliveContext);
     useLayoutEffect(() => {
-        const removeListener = addDeactivateListener(fn);
+        const removeListener = addUnactiveListener(fn);
         return () => removeListener();
     }, [fn]);
 };
