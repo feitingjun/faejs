@@ -16,10 +16,17 @@ export declare const ScopeContext: Context<{
     /**销毁所有Active */
     destroyAll: () => void;
     /**所有已缓存节点 */
-    cachingNodes: Activation[];
+    cachingNodes: {
+        name: string;
+        active: boolean;
+        props: {
+            [key: string]: any;
+        };
+    }[];
 } | null>;
 /**KeepAlive的context，用来给响应自己的激活/失活hooks */
 export declare const KeepAliveContext: Context<{
-    addActiveListener: (fn: () => void) => () => void;
-    addUnactiveListener: (fn: () => void) => () => void;
-}>;
+    addActiveListeners: (fn: (active: boolean) => void) => () => void;
+    addActivateHooks: (fn: () => void) => () => void;
+    addUnactivateHooks: (fn: () => void) => () => void;
+} | null>;

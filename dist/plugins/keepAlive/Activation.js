@@ -3,7 +3,7 @@ export default class Activation {
     /**组件的dom */
     dom = null;
     /**组件是否激活 */
-    active = false;
+    _active = false;
     /**组件的props */
     props = {};
     /**桥接的bridges列表 */
@@ -16,14 +16,23 @@ export default class Activation {
     children = null;
     /**当前组件变更监听 */
     listeners = new Set();
-    /**激活监听器列表 */
-    activateListeners = new Set();
-    /**失活监听器列表 */
-    unactivateListeners = new Set();
+    /**当前组件active状态变更监听 */
+    activeListeners = new Set();
+    /**子组件内的useActivate */
+    activateHooks = new Set();
+    /**子组件内的useUnactivate */
+    unactivateHooks = new Set();
     constructor(name) {
         this.name = name;
-        /**初始化时设置为true，则使useActivate只在激活时触发(首次页面加载时不触发) */
-        this.active = true;
+    }
+    get active() {
+        return this._active;
+    }
+    set active(active) {
+        if (active !== this._active) {
+            this.activeListeners.forEach(fn => fn(active));
+        }
+        this._active = active;
     }
     /**添加变更监听器 */
     subscribe = (cb) => {
@@ -32,19 +41,20 @@ export default class Activation {
     };
     /**触发变更 */
     update = () => {
-        this.listeners.forEach(fn => fn());
+        this.listeners.forEach(fn => fn(this));
     };
     /**保存滚动位置 */
     saveScroll = (ele) => {
         if (!ele)
             return;
+        console.log(ele.scrollLeft, ele.scrollTop);
         this.scroll.set(ele, {
             x: ele.scrollLeft,
             y: ele.scrollTop
         });
         if (ele.childNodes.length > 0) {
             ele.childNodes.forEach(child => {
-                if (child instanceof HTMLElement) {
+                if (child instanceof HTMLElement && !child.classList.contains('ka-alive')) {
                     this.saveScroll(child);
                 }
             });

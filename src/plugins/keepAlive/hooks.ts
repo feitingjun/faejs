@@ -1,8 +1,10 @@
-import { useLayoutEffect, useState, useContext } from 'react'
+import { useLayoutEffect, useState, useContext, useRef, useEffect } from 'react'
 import { ScopeContext } from './context'
 import { KeepAliveContext } from './context'
 
-export const useActivation = (name: string) => {
+type NoParamsFn = () => void
+
+export function useActivation(name: string){
   /**
    * 为了在Active变更时触发组件更新
    * 不能使用useSyncExternalStore，因为只是Active的属性变更，而不是Active的引用变更，
@@ -20,7 +22,7 @@ export const useActivation = (name: string) => {
 }
 
 /**获取操作缓存的api */
-export const useAliveController = () => {
+export function useAliveController(){
   const ctx = useContext(ScopeContext)
   if(!ctx) return {
     destroy: () => {},
@@ -32,20 +34,44 @@ export const useAliveController = () => {
 }
 
 /**激活时执行的hooks */
-export const useActivate = (fn:()=>void) => {
-  const { addActiveListener } = useContext(KeepAliveContext)
+export function useActivate(fn:NoParamsFn){
+  const at = useContext(KeepAliveContext)
+  if(!at) return
   useLayoutEffect(() => {
-    const removeListener = addActiveListener(fn)
+    const removeListener = at.addActivateHooks(fn)
     return () => removeListener()
   }, [fn])
 }
 /**失活时执行的hooks(缓存完全卸载时不触发)
  * 缓存完全卸载时没有办法触发，因为如果卸载时处于失活状态时，没办法触发KeepAlive组件的useEffect
  */
-export const useUnactivate = (fn:()=>void) => {
-  const { addUnactiveListener } = useContext(KeepAliveContext)
+export function useUnactivate(fn:NoParamsFn){
+  const at = useContext(KeepAliveContext)
+  if(!at) return
   useLayoutEffect(() => {
-    const removeListener = addUnactiveListener(fn)
+    const removeListener = at.addUnactivateHooks(fn)
     return () => removeListener()
   }, [fn])
+}
+
+export function useLoadedEffect(fn:NoParamsFn, deps:any[]){
+  const loaded = useRef(false)
+  useEffect(() => {
+    if(loaded.current) {
+      return fn()
+    }else {
+      loaded.current = true
+    }
+  }, deps)
+}
+
+export function useLoadedLayoutEffect(fn:NoParamsFn, deps:any[]){
+  const loaded = useRef(false)
+  useLayoutEffect(() => {
+    if(loaded.current) {
+      return fn()
+    }else {
+      loaded.current = true
+    }
+  }, deps)
 }

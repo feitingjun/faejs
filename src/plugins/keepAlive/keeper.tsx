@@ -1,14 +1,6 @@
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useMemo } from 'react'
 import { KeepAliveContext } from './context'
-import { useActivation } from './hooks'
-
-const useLoadedEffect = (fn:() => void, deps:any[]) => {
-  const loaded = useRef(false)
-  useEffect(() => {
-    if(loaded.current) fn()
-    else loaded.current = true
-  }, deps)
-}
+import { useActivation, useLoadedEffect } from './hooks'
 
 export default memo(({
   name
@@ -19,10 +11,10 @@ export default memo(({
   const at = useActivation(name)
   useLoadedEffect(() => {
     if(at.active){
-      at.activateListeners.forEach(fn => fn())
+      at.activateHooks.forEach(fn => fn())
       at.restoreScroll(at.dom)
     }else{
-      at.unactivateListeners.forEach(fn => fn())
+      at.unactivateHooks.forEach(fn => fn())
     }
   }, [at.active])
 
@@ -45,20 +37,24 @@ export default memo(({
   }, [at.active, at.children])
 
   // 重建桥接的context
-  const providers= at.bridges.reduce((acc, b) => {
+  const providers = at.bridges.reduce((acc, b) => {
     const Provider = b.context.Provider
     return <Provider value={b.value}>{acc}</Provider>
   }, div)
 
   // 为子组件提供激活/失活监听hooks的context
   return <KeepAliveContext.Provider value={{
-    addActiveListener: fn => {
-      at.activateListeners.add(fn)
-      return () => at.activateListeners.delete(fn)
+    addActiveListeners: fn => {
+      at.activeListeners.add(fn)
+      return () => at.activeListeners.delete(fn)
     },
-    addUnactiveListener(fn) {
-      at.unactivateListeners.add(fn)
-      return () => at.unactivateListeners.delete(fn)
+    addActivateHooks: fn => {
+      at.activateHooks.add(fn)
+      return () => at.activateHooks.delete(fn)
+    },
+    addUnactivateHooks(fn) {
+      at.unactivateHooks.add(fn)
+      return () => at.unactivateHooks.delete(fn)
     },
   }}>{providers}</KeepAliveContext.Provider>
 })

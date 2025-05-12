@@ -12,12 +12,12 @@ const fixedContext = [];
 */
 const contextCaches = new Map();
 /**更加name获取fixedContext */
-export const getFixedContext = (name) => {
+export function getFixedContext(name) {
     if (!contextCaches.has(name)) {
         contextCaches.set(name, [...fixedContext]);
     }
     return contextCaches.get(name);
-};
+}
 function repair(mods, names) {
     names.forEach(name => {
         const oldFn = mods[name];

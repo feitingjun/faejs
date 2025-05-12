@@ -1,5 +1,5 @@
 import { ReactNode, ReactElement } from 'react';
-export default function KeepAlive({ name, children, ...props }: {
+export default function KeepAlive(props: {
     name: string;
     children: ReactNode;
     [prop: string]: any;

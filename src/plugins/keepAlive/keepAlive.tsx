@@ -1,7 +1,19 @@
-import { useRef, ReactNode, useContext, Context, ReactElement, cloneElement, useLayoutEffect } from 'react'
-import { ScopeContext } from './context'
+import {
+  useRef,
+  ReactNode,
+  useContext,
+  Context,
+  ReactElement,
+  cloneElement,
+  useLayoutEffect, 
+  useCallback,
+  useEffect,
+  useMemo
+} from 'react'
+import { ScopeContext, KeepAliveContext } from './context'
 import { getFixedContext } from './fixContext'
 import Activation, { Bridge } from './activation'
+import { useLoadedLayoutEffect } from './hooks'
 
 function Wrapper(props: {
   name: string
@@ -9,35 +21,58 @@ function Wrapper(props: {
   bridges: Bridge[]
   [prop: string]: any
 }) {
-  
   const { name, children, bridges, ...args } = props
   const wrapperRef = useRef<HTMLDivElement>(null)
   const scope = useContext(ScopeContext)
   if(!scope) return children
   const { addActivation, getActivation } = scope
+  // 获取父keep-alive的状态
+  const pctx = useContext(KeepAliveContext)
+  const { addActiveListeners } = pctx || {}
   
-  useLayoutEffect(() => {
-    let active = getActivation(name)
-    if(!active) {
-      active = new Activation(name)
-      addActivation(active)
+  // 激活时执行函数
+  const handleActivate = () => {
+    let at = getActivation(name)
+    if(!at) {
+      at = new Activation(name)
+      at.props = args
+      at.bridges = bridges
+      at.children = children
+      addActivation(at)
     }
-    return () => {
-      active.active = false
-      active.saveScroll(active.dom)
-      active.update()
-    }
-  }, [])
+    at.wrapper = wrapperRef.current
+    at.active = true
+    at.update()
+  }
+  // 失活时执行函数
+  const handleUnactivate = () => {
+    let at = getActivation(name)
+    if(!at) return
+    at.active = false
+    at.saveScroll(at.dom)
+    at.update()
+  }
 
   useLayoutEffect(() => {
-    let active = getActivation(name)!
-    active.props = args
-    active.bridges = bridges
-    active.children = children
-    active.wrapper = wrapperRef.current
-    // 能进这里说明当前组件必定是激活状态(不是不会加载当前组件)
-    if(!active.active) active.active = true
-    active.update()
+    handleActivate()
+    // 存在父keep-alive时，子级keep-alive会被缓存导致useLayoutEffect不触发，所以需要使用addUpdateListener监听父级的状态变更
+    const removeListener = addActiveListeners?.((active) => {
+      active ? handleActivate(): handleUnactivate()
+    })
+    return () => {
+      removeListener?.()
+      // 存在父级交给addUpdateListener触发执行
+      !pctx && handleUnactivate()
+    }
+  }, [])
+  // props变化时，更新缓存组件的props(避免创建时执行多次update，所以使用useLoadedLayoutEffect)
+  useLoadedLayoutEffect(() => {
+    let at = getActivation(name)
+    if(!at) return
+    at.props = args
+    at.bridges = bridges
+    at.children = children
+    at.update()
   }, [props])
 
   return <div className='ka-wrapper' ref={wrapperRef} />
@@ -49,19 +84,18 @@ const Bridge = ({children, bridges, ctx}:{children: ReactElement<{bridges:Bridge
   return cloneElement(children, { bridges: [{ context: ctx, value }, ...bridges] })
 }
 
-export default function KeepAlive({
-  name,
-  children,
-  ...props
-}:{
+export default function KeepAlive(props:{
   name: string
   children: ReactNode
   [prop: string]: any
 }){
+  const { name, children, ...args } = props
   const scope = useContext(ScopeContext)
   if(!scope) return children
   // 按顺序获取上级的context及其value，然后传递给缓存组件
-  return getFixedContext(name)!.reduce((prev, ctx) => {
-    return <Bridge bridges={prev.props.bridges} ctx={ctx}>{prev}</Bridge> 
-  }, <Wrapper bridges={[]} name={name} {...props}>{children}</Wrapper>)
+  return useMemo(() => (
+    getFixedContext(name)!.reduce((prev, ctx) => {
+      return <Bridge bridges={prev.props.bridges} ctx={ctx}>{prev}</Bridge> 
+    }, <Wrapper bridges={[]} name={name} {...args}>{children}</Wrapper>)
+  ), [props])
 }

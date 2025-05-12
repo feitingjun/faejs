@@ -1,4 +1,4 @@
-import { createContext, Context, useContext, useLayoutEffect } from 'react'
+import { createContext, Context } from 'react'
 import Activation from './activation'
 
 /**用于记录并向下级传递父级context的桥接context */
@@ -18,14 +18,18 @@ export const ScopeContext = createContext<{
   /**销毁所有Active */
   destroyAll: () => void,
   /**所有已缓存节点 */
-  cachingNodes: Activation[]
+  cachingNodes: {
+    name: string, 
+    active: boolean,
+    props: {
+      [key:string]: any
+    }
+  }[]
 }|null>(null)
 
 /**KeepAlive的context，用来给响应自己的激活/失活hooks */
 export const KeepAliveContext = createContext<{
-  addActiveListener: (fn:()=>void) => () => void,
-  addUnactiveListener: (fn:()=>void) => () => void
-}>({
-  addActiveListener: () => () => {},
-  addUnactiveListener: () => () => {}
-})
+  addActiveListeners: (fn:(active:boolean)=>void) => () => void,
+  addActivateHooks: (fn:()=>void) => () => void,
+  addUnactivateHooks: (fn:()=>void) => () => void
+}|null>(null)

@@ -1,4 +1,5 @@
 import { Context, ReactNode } from 'react'
+import { ac } from 'react-router/dist/development/route-data-BL8ToWby'
 
 export interface Bridge<T=any> {
   context: Context<T>,
@@ -10,7 +11,7 @@ export default class Activation {
   /**组件的dom */
   dom: HTMLDivElement|null = null
   /**组件是否激活 */
-  active: boolean = false
+  private _active: boolean = false
   /**组件的props */
   props: Record<string, any> = {}
   /**桥接的bridges列表 */
@@ -22,15 +23,24 @@ export default class Activation {
   /**当前组件的children */
   children: ReactNode|null = null
   /**当前组件变更监听 */
-  listeners: Set<() => void> = new Set()
-  /**激活监听器列表 */
-  activateListeners: Set<() => void> = new Set()
-  /**失活监听器列表 */
-  unactivateListeners: Set<() => void> = new Set()
+  listeners: Set<(at:Activation) => void> = new Set()
+  /**当前组件active状态变更监听 */
+  activeListeners: Set<(active: boolean) => void> = new Set()
+  /**子组件内的useActivate */
+  activateHooks: Set<() => void> = new Set()
+  /**子组件内的useUnactivate */
+  unactivateHooks: Set<() => void> = new Set()
   constructor(name: string){
     this.name = name
-    /**初始化时设置为true，则使useActivate只在激活时触发(首次页面加载时不触发) */
-    this.active = true
+  }
+  get active(){
+    return this._active
+  }
+  set active(active: boolean){
+    if(active !== this._active){
+      this.activeListeners.forEach(fn => fn(active))
+    }
+    this._active = active
   }
   /**添加变更监听器 */
   subscribe = (cb: () => void) => {
@@ -39,18 +49,19 @@ export default class Activation {
   }
   /**触发变更 */
   update = () => {
-    this.listeners.forEach(fn => fn())
+    this.listeners.forEach(fn => fn(this))
   }
   /**保存滚动位置 */
   saveScroll = (ele: HTMLElement|null) => {
     if(!ele) return
+    console.log(ele.scrollLeft, ele.scrollTop)
     this.scroll.set(ele, {
       x: ele.scrollLeft,
       y: ele.scrollTop
     })
     if(ele.childNodes.length  > 0){
       ele.childNodes.forEach(child => {
-        if(child instanceof HTMLElement){
+        if(child instanceof HTMLElement && !child.classList.contains('ka-alive')){
           this.saveScroll(child)
         }
       })

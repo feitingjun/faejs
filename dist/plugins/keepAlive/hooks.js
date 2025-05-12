@@ -1,7 +1,7 @@
-import { useLayoutEffect, useState, useContext } from 'react';
+import { useLayoutEffect, useState, useContext, useRef, useEffect } from 'react';
 import { ScopeContext } from "./context.js";
 import { KeepAliveContext } from "./context.js";
-export const useActivation = (name) => {
+export function useActivation(name) {
     /**
      * 为了在Active变更时触发组件更新
      * 不能使用useSyncExternalStore，因为只是Active的属性变更，而不是Active的引用变更，
@@ -16,9 +16,9 @@ export const useActivation = (name) => {
         return () => { unsubscribe(); };
     }, [name]);
     return getActivation(name);
-};
+}
 /**获取操作缓存的api */
-export const useAliveController = () => {
+export function useAliveController() {
     const ctx = useContext(ScopeContext);
     if (!ctx)
         return {
@@ -28,23 +28,49 @@ export const useAliveController = () => {
         };
     const { destroy, destroyAll, cachingNodes } = ctx;
     return { destroy, destroyAll, cachingNodes };
-};
+}
 /**激活时执行的hooks */
-export const useActivate = (fn) => {
-    const { addActiveListener } = useContext(KeepAliveContext);
+export function useActivate(fn) {
+    const at = useContext(KeepAliveContext);
+    if (!at)
+        return;
     useLayoutEffect(() => {
-        const removeListener = addActiveListener(fn);
+        const removeListener = at.addActivateHooks(fn);
         return () => removeListener();
     }, [fn]);
-};
+}
 /**失活时执行的hooks(缓存完全卸载时不触发)
  * 缓存完全卸载时没有办法触发，因为如果卸载时处于失活状态时，没办法触发KeepAlive组件的useEffect
  */
-export const useUnactivate = (fn) => {
-    const { addUnactiveListener } = useContext(KeepAliveContext);
+export function useUnactivate(fn) {
+    const at = useContext(KeepAliveContext);
+    if (!at)
+        return;
     useLayoutEffect(() => {
-        const removeListener = addUnactiveListener(fn);
+        const removeListener = at.addUnactivateHooks(fn);
         return () => removeListener();
     }, [fn]);
-};
+}
+export function useLoadedEffect(fn, deps) {
+    const loaded = useRef(false);
+    useEffect(() => {
+        if (loaded.current) {
+            return fn();
+        }
+        else {
+            loaded.current = true;
+        }
+    }, deps);
+}
+export function useLoadedLayoutEffect(fn, deps) {
+    const loaded = useRef(false);
+    useLayoutEffect(() => {
+        if (loaded.current) {
+            return fn();
+        }
+        else {
+            loaded.current = true;
+        }
+    }, deps);
+}
 //# sourceMappingURL=hooks.js.map

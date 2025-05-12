@@ -8,7 +8,7 @@ export default class Activation {
     /**组件的dom */
     dom: HTMLDivElement | null;
     /**组件是否激活 */
-    active: boolean;
+    private _active;
     /**组件的props */
     props: Record<string, any>;
     /**桥接的bridges列表 */
@@ -23,12 +23,16 @@ export default class Activation {
     /**当前组件的children */
     children: ReactNode | null;
     /**当前组件变更监听 */
-    listeners: Set<() => void>;
-    /**激活监听器列表 */
-    activateListeners: Set<() => void>;
-    /**失活监听器列表 */
-    unactivateListeners: Set<() => void>;
+    listeners: Set<(at: Activation) => void>;
+    /**当前组件active状态变更监听 */
+    activeListeners: Set<(active: boolean) => void>;
+    /**子组件内的useActivate */
+    activateHooks: Set<() => void>;
+    /**子组件内的useUnactivate */
+    unactivateHooks: Set<() => void>;
     constructor(name: string);
+    get active(): boolean;
+    set active(active: boolean);
     /**添加变更监听器 */
     subscribe: (cb: () => void) => () => boolean;
     /**触发变更 */

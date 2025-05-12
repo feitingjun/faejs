@@ -15,19 +15,26 @@ export default function AliveScope ({
       <ScopeContext.Provider value={{
         addActivation: at => {
           actives.current.set(at.name, at)
-          setNames([...names, at.name])
+          setNames(ns => ([...ns, at.name]))
         },
         getActivation: name => actives.current.get(name),
         destroy: name => {
           if(typeof name === 'string') name = [name]
-          setNames(names.filter(v => !name.includes(v)))
           name.forEach(v => actives.current.delete(v))
+          setNames(ns => ns.filter(v => !name.includes(v)))
         },
         destroyAll: () => {
           setNames([])
           actives.current.clear()
         },
-        cachingNodes: names.map(v => ({...actives.current.get(v)!}))
+        cachingNodes: names.map(v => {
+          const at = actives.current.get(v)!
+          return {
+            name: at.name,
+            props: at.props,
+            active: at.active
+          }
+        })
       }}>
         {children}
         <div className='ka-caches'>{[...names.map(v => {

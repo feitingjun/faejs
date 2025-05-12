@@ -14,7 +14,7 @@ const fixedContext:Context<any>[] = []
 const contextCaches = new Map<string, Context<any>[]>()
 
 /**更加name获取fixedContext */
-export const getFixedContext = (name:string) => {
+export function getFixedContext(name:string){
   if(!contextCaches.has(name)){
     contextCaches.set(name, [...fixedContext])
   }

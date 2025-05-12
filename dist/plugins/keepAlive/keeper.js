@@ -1,26 +1,17 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useMemo } from 'react';
 import { KeepAliveContext } from "./context.js";
-import { useActivation } from "./hooks.js";
-const useLoadedEffect = (fn, deps) => {
-    const loaded = useRef(false);
-    useEffect(() => {
-        if (loaded.current)
-            fn();
-        else
-            loaded.current = true;
-    }, deps);
-};
+import { useActivation, useLoadedEffect } from "./hooks.js";
 export default memo(({ name }) => {
     // 获取最新的Activation实例
     const at = useActivation(name);
     useLoadedEffect(() => {
         if (at.active) {
-            at.activateListeners.forEach(fn => fn());
+            at.activateHooks.forEach(fn => fn());
             at.restoreScroll(at.dom);
         }
         else {
-            at.unactivateListeners.forEach(fn => fn());
+            at.unactivateHooks.forEach(fn => fn());
         }
     }, [at.active]);
     /**
@@ -40,13 +31,17 @@ export default memo(({ name }) => {
     }, div);
     // 为子组件提供激活/失活监听hooks的context
     return _jsx(KeepAliveContext.Provider, { value: {
-            addActiveListener: fn => {
-                at.activateListeners.add(fn);
-                return () => at.activateListeners.delete(fn);
+            addActiveListeners: fn => {
+                at.activeListeners.add(fn);
+                return () => at.activeListeners.delete(fn);
             },
-            addUnactiveListener(fn) {
-                at.unactivateListeners.add(fn);
-                return () => at.unactivateListeners.delete(fn);
+            addActivateHooks: fn => {
+                at.activateHooks.add(fn);
+                return () => at.activateHooks.delete(fn);
+            },
+            addUnactivateHooks(fn) {
+                at.unactivateHooks.add(fn);
+                return () => at.unactivateHooks.delete(fn);
             },
         }, children: providers });
 });
