@@ -1,10 +1,10 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { memo, useMemo } from 'react';
 import { KeepAliveContext } from "./context.js";
-import { useActivation, useLoadedEffect } from "./hooks.js";
+import { useGetActivation, useLoadedEffect } from "./hooks.js";
 export default memo(({ name }) => {
     // 获取最新的Activation实例
-    const at = useActivation(name);
+    const at = useGetActivation(name);
     useLoadedEffect(() => {
         if (at.active) {
             at.activateHooks.forEach(fn => fn());

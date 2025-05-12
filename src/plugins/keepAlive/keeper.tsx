@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react'
 import { KeepAliveContext } from './context'
-import { useActivation, useLoadedEffect } from './hooks'
+import { useGetActivation, useLoadedEffect } from './hooks'
 
 export default memo(({
   name
@@ -8,7 +8,7 @@ export default memo(({
   name:string
 }) => {
   // 获取最新的Activation实例
-  const at = useActivation(name)
+  const at = useGetActivation(name)
   useLoadedEffect(() => {
     if(at.active){
       at.activateHooks.forEach(fn => fn())
