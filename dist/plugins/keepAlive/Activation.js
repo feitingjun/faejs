@@ -29,9 +29,9 @@ export default class Activation {
         return this._active;
     }
     set active(active) {
-        if (active !== this._active) {
-            this.activeListeners.forEach(fn => fn(active));
-        }
+        if (active === this._active)
+            return;
+        this.activeListeners.forEach(fn => fn(active));
         this._active = active;
     }
     /**添加变更监听器 */

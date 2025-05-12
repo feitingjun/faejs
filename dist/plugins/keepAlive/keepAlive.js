@@ -39,16 +39,22 @@ function Wrapper(props) {
     };
     useLayoutEffect(() => {
         handleActivate();
-        // 存在父keep-alive时，子级keep-alive会被缓存导致useLayoutEffect不触发，所以需要使用addUpdateListener监听父级的状态变更
-        const removeListener = addActiveListeners?.((active) => {
-            active ? handleActivate() : handleUnactivate();
-        });
         return () => {
-            removeListener?.();
             // 存在父级交给addUpdateListener触发执行
             !pctx && handleUnactivate();
         };
     }, []);
+    /**
+     * 存在父keep-alive时，子级keep-alive会被缓存导致useLayoutEffect不触发
+     * 所以需要使用addUpdateListener监听父级的状态变更
+     * 并且需要依赖props以获取最新的bridges、children等
+     */
+    useLayoutEffect(() => {
+        const removeListener = addActiveListeners?.((active) => {
+            active ? handleActivate() : handleUnactivate();
+        });
+        return () => removeListener?.();
+    }, [props]);
     // props变化时，更新缓存组件的props(避免创建时执行多次update，所以使用useLoadedLayoutEffect)
     useLoadedLayoutEffect(() => {
         let at = getActivation(name);
