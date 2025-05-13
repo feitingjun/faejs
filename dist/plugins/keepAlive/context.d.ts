@@ -16,7 +16,7 @@ export declare const ScopeContext: Context<{
     /**销毁所有Active */
     destroyAll: () => void;
     /**所有已缓存节点 */
-    cachingNodes: {
+    getCachingNodes: () => {
         name: string;
         active: boolean;
         props: {

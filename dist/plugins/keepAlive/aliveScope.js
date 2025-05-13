@@ -21,7 +21,7 @@ export default function AliveScope({ children }) {
                     setNames([]);
                     actives.current.clear();
                 },
-                cachingNodes: names.map(v => {
+                getCachingNodes: () => names.map(v => {
                     const at = actives.current.get(v);
                     return {
                         name: at.name,

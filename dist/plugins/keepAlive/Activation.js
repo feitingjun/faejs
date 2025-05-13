@@ -47,7 +47,6 @@ export default class Activation {
     saveScroll = (ele) => {
         if (!ele)
             return;
-        console.log(ele.scrollLeft, ele.scrollTop);
         this.scroll.set(ele, {
             x: ele.scrollLeft,
             y: ele.scrollTop

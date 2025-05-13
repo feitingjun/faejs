@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState, useContext, useRef, useEffect } from 'react';
 import { ScopeContext } from "./context.js";
 import { KeepAliveContext } from "./context.js";
-export function useActivation(name) {
+export function useGetActivation(name) {
     /**
      * 为了在Active变更时触发组件更新
      * 不能使用useSyncExternalStore，因为只是Active的属性变更，而不是Active的引用变更，
@@ -26,8 +26,8 @@ export function useAliveController() {
             destroyAll: () => { },
             cachingNodes: []
         };
-    const { destroy, destroyAll, cachingNodes } = ctx;
-    return { destroy, destroyAll, cachingNodes };
+    const { destroy, destroyAll, getCachingNodes } = ctx;
+    return { destroy, destroyAll, getCachingNodes };
 }
 /**激活时执行的hooks */
 export function useActivate(fn) {

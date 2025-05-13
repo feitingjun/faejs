@@ -52,7 +52,6 @@ export default class Activation {
   /**保存滚动位置 */
   saveScroll = (ele: HTMLElement|null) => {
     if(!ele) return
-    console.log(ele.scrollLeft, ele.scrollTop)
     this.scroll.set(ele, {
       x: ele.scrollLeft,
       y: ele.scrollTop

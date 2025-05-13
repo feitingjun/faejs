@@ -1,16 +1,22 @@
 type NoParamsFn = () => void;
-export declare function useActivation(name: string): import("./activation").default;
+export declare function useGetActivation(name: string): import("./activation").default;
 /**获取操作缓存的api */
 export declare function useAliveController(): {
+    destroy: () => void;
+    destroyAll: () => void;
+    cachingNodes: never[];
+    getCachingNodes?: undefined;
+} | {
     destroy: (name: string | string[]) => void;
     destroyAll: () => void;
-    cachingNodes: {
+    getCachingNodes: () => {
         name: string;
         active: boolean;
         props: {
             [key: string]: any;
         };
     }[];
+    cachingNodes?: undefined;
 };
 /**激活时执行的hooks */
 export declare function useActivate(fn: NoParamsFn): void;
