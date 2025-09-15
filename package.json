@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "fae": "dist/bin/index.js"
+    "fae": "dist/bin/index.js",
+    "create-fae": "dist/bin/create.js"
   },
   "exports": {
     ".": "./dist/index.js",
