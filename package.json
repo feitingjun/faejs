@@ -12,8 +12,7 @@
     "./plugins/*": "./dist/plugins/*"
   },
   "scripts": {
-    "create": "fea create",
-    "dev": "fea dev",
+    "create": "fae create",
     "start": "node build.js -w -d",
     "build": "node build.js"
   },
