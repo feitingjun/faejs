@@ -5,4 +5,3 @@ export default async function buildApp() {
         logLevel: 'info',
     }));
 }
-//# sourceMappingURL=build.js.map

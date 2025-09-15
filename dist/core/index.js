@@ -21,8 +21,13 @@ function needGenerateRoutes(path, srcDir = 'src') {
     // 匹配以(.)page.tsx | (.)layout.tsx | layout/index.tsx 结尾且page.tsx不在layout(s)下的文件
     const isPageOrLayout = /^(?:(?!.*(layout|layouts)\/.*page\.tsx).)*\/((\S+\.)?page\.tsx|(\S+\.)?layout\.tsx|layout\/index\.tsx)$/.test(path);
     // 是否在指定的pages目录下
-    const inPagesDir = existsSync(resolve(process.cwd(), srcDir, 'pages')) ? path.startsWith(`${srcDir}/pages`) : path.startsWith(srcDir);
-    return (isRootLayout || (isPageOrLayout && inPagesDir) || path === srcDir || path === `${srcDir}/pages`);
+    const inPagesDir = existsSync(resolve(process.cwd(), srcDir, 'pages'))
+        ? path.startsWith(`${srcDir}/pages`)
+        : path.startsWith(srcDir);
+    return (isRootLayout ||
+        (isPageOrLayout && inPagesDir) ||
+        path === srcDir ||
+        path === `${srcDir}/pages`);
 }
 /**生成路由清单 */
 function generateRouteManifest(src = 'src') {
@@ -32,7 +37,12 @@ function generateRouteManifest(src = 'src') {
     // 获取全局layout
     const rootLayout = globSync('layout{s,}{/index,}.tsx', { cwd: srcDir });
     // 获取所有页面
-    const include = ['**/{*.,}page.tsx', '**/{*.,}layout.tsx', '**/layout/index.tsx', '**/404{/index,}.tsx'];
+    const include = [
+        '**/{*.,}page.tsx',
+        '**/{*.,}layout.tsx',
+        '**/layout/index.tsx',
+        '**/404{/index,}.tsx'
+    ];
     const ignore = ['**/layout/**/*{[^/],}page.tsx', '**/layout/**/layout.tsx'];
     const pages = globSync(include, { cwd: resolve(srcDir, pageDir), ignore });
     // 获取id和文件的映射
@@ -126,34 +136,34 @@ function loadPlugins(faeConfig) {
     const tailCodes = [];
     // 文件变更时触发的函数
     const watchers = [];
-    const modifyUserConfig = (fn) => {
+    const modifyUserConfig = fn => {
         faeConfig = fn(faeConfig);
     };
     const addFile = ({ content, outPath }) => {
         writeFileSync(outPath, content);
     };
-    const addFileTemplate = (options) => {
+    const addFileTemplate = options => {
         renderHbsTpl(options);
     };
-    const addPageConfigType = (options) => {
+    const addPageConfigType = options => {
         pageConfigTypes.push(options);
     };
-    const addAppConfigType = (options) => {
+    const addAppConfigType = options => {
         appConfigTypes.push(options);
     };
-    const addExport = (options) => {
+    const addExport = options => {
         exports.push(options);
     };
-    const addEntryImport = (options) => {
+    const addEntryImport = options => {
         imports.push(options);
     };
-    const addEntryCodeAhead = (code) => {
+    const addEntryCodeAhead = code => {
         aheadCodes.push(code);
     };
-    const addEntryCodeTail = (code) => {
+    const addEntryCodeTail = code => {
         tailCodes.push(code);
     };
-    const addWatch = (fn) => {
+    const addWatch = fn => {
         watchers.push(fn);
     };
     // 解析fae插件
@@ -217,7 +227,9 @@ async function getHtmlTemplate(srcDir, fileName) {
 /**加载全局样式文件 */
 function loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers }) {
     // 判断是否存在global.less文件
-    const globalStyle = globSync(`${srcDir}/global.{less,scss,css}`, { cwd: process.cwd() });
+    const globalStyle = globSync(`${srcDir}/global.{less,scss,css}`, {
+        cwd: process.cwd()
+    });
     if (globalStyle && globalStyle.length > 0) {
         imports.push({ source: `${process.cwd()}/${globalStyle[0]}` });
     }
@@ -301,9 +313,9 @@ export default async function FaeCore() {
                 resolve: {
                     alias: {
                         '@': resolve(process.cwd(), srcDir.split('/')[0]),
-                        'fae': resolve(process.cwd(), srcDir, '.fae'),
+                        fae: resolve(process.cwd(), srcDir, '.fae'),
                         '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx'),
-                        ...alias ?? {}
+                        ...(alias ?? {})
                     }
                 },
                 proxy,
@@ -317,36 +329,12 @@ export default async function FaeCore() {
                 }
             };
         },
-        configureServer: (server) => {
+        configureServer: server => {
             const srcDir = faeConfig.srcDir;
             server.watcher.on('all', (event, path, stats) => {
                 debounce(() => watchRoutes(server, event, path, srcDir), 150)();
                 watchers.forEach(fn => fn(event, path, stats));
             });
-            server.middlewares.use(async (req, res, next) => {
-                // 处理html请求
-                if (req.headers.accept?.includes('text/html') &&
-                    !req.url?.startsWith('/@vite') &&
-                    !req.url?.includes('.')) {
-                    // 这儿的/fae.tsx是在alias中配置的别名
-                    let html = await getHtmlTemplate(faeConfig.srcDir, '/fae.tsx');
-                    // 将html交给vite处理(必须，否则热更新等功能无法使用且会报错)
-                    html = await server.transformIndexHtml(req.url, html);
-                    res.setHeader('Content-Type', 'text/html');
-                    res.end(html);
-                }
-                else {
-                    next();
-                }
-            });
-        },
-        writeBundle: async (options, bundle) => {
-            const fileName = Object.values(bundle).find(v => 'isEntry' in v && v.isEntry).fileName;
-            if (!fileName)
-                return;
-            const html = await getHtmlTemplate(faeConfig.srcDir, fileName);
-            writeFileSync(resolve(options.dir, 'index.html'), html);
         }
     };
 }
-//# sourceMappingURL=index.js.map

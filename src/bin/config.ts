@@ -17,7 +17,7 @@ export default defineConfig({
     host: true,
     port: 8000,
     open: false,
-    strictPort: false, // 端口被占用时，是否直接退出
+    strictPort: false // 端口被占用时，是否直接退出
   },
   logLevel: 'warn',
   envDir: resolve(process.cwd(), '.env'),

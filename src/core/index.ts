@@ -6,7 +6,14 @@ import { globSync } from 'glob'
 import { createElement } from 'react'
 import { dynamicImport, debounce, chalk, getLocalIp } from '../utils'
 import { renderHbsTpl } from '../hbs'
-import { FaeConfig, AddFileOptions, MakePropertyOptional, PluginWatcher, PluginOptions, RouteManifest } from './types'
+import {
+  FaeConfig,
+  AddFileOptions,
+  MakePropertyOptional,
+  PluginWatcher,
+  PluginOptions,
+  RouteManifest
+} from './types'
 import { createTmpDir, writeEntryTsx, writeFaeRoutesTs } from '../writeFile'
 import model from '../plugins/model'
 import reactActivation from '../plugins/reactActivation'
@@ -18,26 +25,41 @@ import keepAlive from '../plugins/keepAlive'
 const __dirname = import.meta.dirname
 
 /**是否需要重新生成路由 */
-function needGenerateRoutes(path:string, srcDir='src'){
+function needGenerateRoutes(path: string, srcDir = 'src') {
   // 匹配src目录下的layout(s).tsx | layout(s)/index.tsx
   const regex = new RegExp(`^${srcDir}/(layout|layouts)(?:/index)?.tsx$`)
   const isRootLayout = regex.test(path)
   // 匹配以(.)page.tsx | (.)layout.tsx | layout/index.tsx 结尾且page.tsx不在layout(s)下的文件
-  const isPageOrLayout = /^(?:(?!.*(layout|layouts)\/.*page\.tsx).)*\/((\S+\.)?page\.tsx|(\S+\.)?layout\.tsx|layout\/index\.tsx)$/.test(path)
+  const isPageOrLayout =
+    /^(?:(?!.*(layout|layouts)\/.*page\.tsx).)*\/((\S+\.)?page\.tsx|(\S+\.)?layout\.tsx|layout\/index\.tsx)$/.test(
+      path
+    )
   // 是否在指定的pages目录下
-  const inPagesDir = existsSync(resolve(process.cwd(), srcDir, 'pages')) ? path.startsWith(`${srcDir}/pages`) : path.startsWith(srcDir)
-  return (isRootLayout || (isPageOrLayout && inPagesDir) || path === srcDir || path === `${srcDir}/pages`)
+  const inPagesDir = existsSync(resolve(process.cwd(), srcDir, 'pages'))
+    ? path.startsWith(`${srcDir}/pages`)
+    : path.startsWith(srcDir)
+  return (
+    isRootLayout ||
+    (isPageOrLayout && inPagesDir) ||
+    path === srcDir ||
+    path === `${srcDir}/pages`
+  )
 }
 
 /**生成路由清单 */
-function generateRouteManifest(src:string='src'){
+function generateRouteManifest(src: string = 'src') {
   const srcDir = resolve(process.cwd(), src)
   // 获取页面根目录
   const pageDir = existsSync(srcDir + '/pages') ? 'pages' : ''
   // 获取全局layout
   const rootLayout = globSync('layout{s,}{/index,}.tsx', { cwd: srcDir })
   // 获取所有页面
-  const include = ['**/{*.,}page.tsx', '**/{*.,}layout.tsx', '**/layout/index.tsx', '**/404{/index,}.tsx']
+  const include = [
+    '**/{*.,}page.tsx',
+    '**/{*.,}layout.tsx',
+    '**/layout/index.tsx',
+    '**/404{/index,}.tsx'
+  ]
   const ignore = ['**/layout/**/*{[^/],}page.tsx', '**/layout/**/layout.tsx']
   const pages = globSync(include, { cwd: resolve(srcDir, pageDir), ignore })
   // 获取id和文件的映射
@@ -59,7 +81,8 @@ function generateRouteManifest(src:string='src'){
     return prev
   }, {} as Record<string, string>)
   const ids = Object.keys(idpaths).sort((a, b) => {
-    const nA = a.replace(/\/?layout/, ''), nB = b.replace(/\/?layout/, '')
+    const nA = a.replace(/\/?layout/, ''),
+      nB = b.replace(/\/?layout/, '')
     return nA.length === nB.length ? a.indexOf('layout') : nB.length - nA.length
   })
 
@@ -68,7 +91,10 @@ function generateRouteManifest(src:string='src'){
     const parentId = ids.slice(index + 1).find(v => {
       return v.endsWith('layout') && id.startsWith(v.replace(/\/?layout/, ''))
     })
-    const regex = new RegExp(`^${parentId?.replace(/\/?layout$/, '')}/?|/?layout$`, 'g')
+    const regex = new RegExp(
+      `^${parentId?.replace(/\/?layout$/, '')}/?|/?layout$`,
+      'g'
+    )
     return {
       ...prev,
       [id]: {
@@ -98,7 +124,12 @@ function generateRouteManifest(src:string='src'){
 }
 
 /**监听路由文件变化 */
-async function watchRoutes (server: ViteDevServer, event: string, path: string, srcDir = 'src'){
+async function watchRoutes(
+  server: ViteDevServer,
+  event: string,
+  path: string,
+  srcDir = 'src'
+) {
   // 获取项目根目录的的路径
   path = relative(process.cwd(), path)
   // 用户配置变更后重启服务器
@@ -108,64 +139,69 @@ async function watchRoutes (server: ViteDevServer, event: string, path: string, 
       const port = server.config.server.port
       console.log('服务器重启成功')
       console.log(`  - Local: ${chalk.green(`http://localhost:${port}`)}`)
-      console.log(`  - Network: ${chalk.green(`http://${getLocalIp()}:${port}`)}\n`)
+      console.log(
+        `  - Network: ${chalk.green(`http://${getLocalIp()}:${port}`)}\n`
+      )
     })
   }
   // 重新生成路由
-  if (event !== 'change' && needGenerateRoutes(path)){
-    writeFaeRoutesTs(resolve(process.cwd(), srcDir, '.fae'), generateRouteManifest(srcDir))
+  if (event !== 'change' && needGenerateRoutes(path)) {
+    writeFaeRoutesTs(
+      resolve(process.cwd(), srcDir, '.fae'),
+      generateRouteManifest(srcDir)
+    )
   }
 }
 
-function loadPlugins(faeConfig:FaeConfig){
+function loadPlugins(faeConfig: FaeConfig) {
   // 运行时配置
-  const runtimes:string[] = []
+  const runtimes: string[] = []
   // 额外的pageConfig类型
-  const pageConfigTypes:AddFileOptions[] = []
+  const pageConfigTypes: AddFileOptions[] = []
   // 额外的appConfig类型
-  const appConfigTypes:AddFileOptions[] = []
+  const appConfigTypes: AddFileOptions[] = []
   // 从fae命名空间导出的模块
-  const exports:(AddFileOptions & { type?: boolean })[] = []
+  const exports: (AddFileOptions & { type?: boolean })[] = []
   // 在入口文件中导入的模块
-  const imports:MakePropertyOptional<AddFileOptions, 'specifier'>[] = []
+  const imports: MakePropertyOptional<AddFileOptions, 'specifier'>[] = []
   // 在入口文件顶部插入的代码
-  const aheadCodes:string[] = []
+  const aheadCodes: string[] = []
   // 在入口文件尾部插入的代码
-  const tailCodes:string[] = []
+  const tailCodes: string[] = []
   // 文件变更时触发的函数
-  const watchers:PluginWatcher[]  = []
-  const modifyUserConfig:PluginOptions['modifyUserConfig'] = (fn) => {
+  const watchers: PluginWatcher[] = []
+  const modifyUserConfig: PluginOptions['modifyUserConfig'] = fn => {
     faeConfig = fn(faeConfig)
   }
-  const addFile:PluginOptions['addFile'] = ({ content, outPath }) => {
+  const addFile: PluginOptions['addFile'] = ({ content, outPath }) => {
     writeFileSync(outPath, content)
   }
-  const addFileTemplate:PluginOptions['addFileTemplate'] = (options) => {
+  const addFileTemplate: PluginOptions['addFileTemplate'] = options => {
     renderHbsTpl(options)
   }
-  const addPageConfigType:PluginOptions['addPageConfigType'] = (options) => {
+  const addPageConfigType: PluginOptions['addPageConfigType'] = options => {
     pageConfigTypes.push(options)
   }
-  const addAppConfigType:PluginOptions['addAppConfigType'] = (options) => {
+  const addAppConfigType: PluginOptions['addAppConfigType'] = options => {
     appConfigTypes.push(options)
   }
-  const addExport:PluginOptions['addExport'] = (options) => {
+  const addExport: PluginOptions['addExport'] = options => {
     exports.push(options)
   }
-  const addEntryImport:PluginOptions['addEntryImport'] = (options) => {
+  const addEntryImport: PluginOptions['addEntryImport'] = options => {
     imports.push(options)
   }
-  const addEntryCodeAhead:PluginOptions['addEntryCodeAhead'] = (code) => {
+  const addEntryCodeAhead: PluginOptions['addEntryCodeAhead'] = code => {
     aheadCodes.push(code)
   }
-  const addEntryCodeTail:PluginOptions['addEntryCodeTail'] = (code) => {
+  const addEntryCodeTail: PluginOptions['addEntryCodeTail'] = code => {
     tailCodes.push(code)
   }
-  const addWatch:PluginOptions['addWatch'] = (fn) => {
+  const addWatch: PluginOptions['addWatch'] = fn => {
     watchers.push(fn)
   }
   // 解析fae插件
-  if(faeConfig.plugins && faeConfig.plugins.length > 0){
+  if (faeConfig.plugins && faeConfig.plugins.length > 0) {
     // 动态导入package.json
     const pkgText = readFileSync(`${process.cwd()}/package.json`, 'utf-8')
     const pkg = JSON.parse(pkgText)
@@ -175,11 +211,11 @@ function loadPlugins(faeConfig:FaeConfig){
       const context = {
         mode: process.env.NODE_ENV as ViteConfig['mode'],
         root: process.cwd(),
-        srcDir: faeConfig.srcDir??'src',
+        srcDir: faeConfig.srcDir ?? 'src',
         userConfig: faeConfig,
         pkg
       }
-      if(runtime) runtimes.push(runtime)
+      if (runtime) runtimes.push(runtime)
       setup?.({
         context,
         modifyUserConfig,
@@ -207,47 +243,64 @@ function loadPlugins(faeConfig:FaeConfig){
   }
 }
 
-async function getHtmlTemplate(srcDir:string, fileName:string){
+async function getHtmlTemplate(srcDir: string, fileName: string) {
   let temp = resolve(process.cwd(), srcDir, 'document.tsx')
-  if(!existsSync(temp)){
+  if (!existsSync(temp)) {
     temp = resolve(__dirname, '..', 'template', 'document.js')
   }
   const module = (await dynamicImport(temp)).default
   // 将document.tsx模版转换为html字符串
-  return renderToString(createElement(module, {
-    entry: createElement('script', {
-      type: 'module',
-      key: 'entry',
-      src: fileName
+  return renderToString(
+    createElement(module, {
+      entry: createElement('script', {
+        type: 'module',
+        key: 'entry',
+        src: fileName
+      })
     })
-  }))
+  )
 }
 
 /**加载全局样式文件 */
-function loadGlobalStyle(srcDir:string, { imports, aheadCodes, tailCodes, watchers }:{
-  imports: MakePropertyOptional<AddFileOptions, 'specifier'>[]
-  aheadCodes: string[]
-  tailCodes: string[]
-  watchers: PluginWatcher[]
-}){
+function loadGlobalStyle(
+  srcDir: string,
+  {
+    imports,
+    aheadCodes,
+    tailCodes,
+    watchers
+  }: {
+    imports: MakePropertyOptional<AddFileOptions, 'specifier'>[]
+    aheadCodes: string[]
+    tailCodes: string[]
+    watchers: PluginWatcher[]
+  }
+) {
   // 判断是否存在global.less文件
-  const globalStyle = globSync(`${srcDir}/global.{less,scss,css}`, { cwd: process.cwd() })
-  if(globalStyle && globalStyle.length > 0){
+  const globalStyle = globSync(`${srcDir}/global.{less,scss,css}`, {
+    cwd: process.cwd()
+  })
+  if (globalStyle && globalStyle.length > 0) {
     imports.push({ source: `${process.cwd()}/${globalStyle[0]}` })
   }
   // 添加一个监听global.less增删的监听器
   watchers.push((event, path) => {
-    const reg = new RegExp(`^${process.cwd()}/${srcDir}/global.(less|scss|css)$`)
-    if(!reg.test(path)) return
-    if(event === 'add'){
+    const reg = new RegExp(
+      `^${process.cwd()}/${srcDir}/global.(less|scss|css)$`
+    )
+    if (!reg.test(path)) return
+    if (event === 'add') {
       imports.push({ source: path })
       writeEntryTsx(resolve(process.cwd(), srcDir, '.fae'), {
         imports,
         aheadCodes,
         tailCodes
       })
-    }else if(event === 'unlink'){
-      imports.splice(imports.findIndex(v => v.source === path), 1)
+    } else if (event === 'unlink') {
+      imports.splice(
+        imports.findIndex(v => v.source === path),
+        1
+      )
       writeEntryTsx(resolve(process.cwd(), srcDir, '.fae'), {
         imports,
         aheadCodes,
@@ -258,27 +311,46 @@ function loadGlobalStyle(srcDir:string, { imports, aheadCodes, tailCodes, watche
 }
 
 /**vite插件，负责解析.faerc.ts配置，生成约定式路由，以及提供fae插件功能*/
-export default async function FaeCore():Promise<Plugin>{
-  let faeConfig:FaeConfig = {}
-  let watchers:PluginWatcher[] = []
+export default async function FaeCore(): Promise<Plugin> {
+  let faeConfig: FaeConfig = {}
+  let watchers: PluginWatcher[] = []
   return {
     name: 'fae-core',
     enforce: 'pre',
-    config: async (config) => {
+    config: async config => {
       // 用户配置文件变更时重置
       watchers = []
       faeConfig = (await dynamicImport(`${process.cwd()}/.faerc.ts`)).default
       // 添加默认插件
-      if(!faeConfig.plugins) faeConfig.plugins = []
-      if(faeConfig.model) faeConfig.plugins.push(model)
-      if(faeConfig.reactActivation) faeConfig.plugins.push(reactActivation)
-      if(faeConfig.access) faeConfig.plugins.push(access)
-      if(faeConfig.atom) faeConfig.plugins.push(atom)
-      if(faeConfig.jotai) faeConfig.plugins.push(jotai)
-      if(faeConfig.keepAlive) faeConfig.plugins.push(keepAlive)
-      const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = loadPlugins(faeConfig)
+      if (!faeConfig.plugins) faeConfig.plugins = []
+      if (faeConfig.model) faeConfig.plugins.push(model)
+      if (faeConfig.reactActivation) faeConfig.plugins.push(reactActivation)
+      if (faeConfig.access) faeConfig.plugins.push(access)
+      if (faeConfig.atom) faeConfig.plugins.push(atom)
+      if (faeConfig.jotai) faeConfig.plugins.push(jotai)
+      if (faeConfig.keepAlive) faeConfig.plugins.push(keepAlive)
+      const {
+        pageConfigTypes,
+        appConfigTypes,
+        exports,
+        imports,
+        aheadCodes,
+        tailCodes,
+        runtimes,
+        watchers: pluginWatchers
+      } = loadPlugins(faeConfig)
       // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
-      const { port, base, publicDir, srcDir='src', outDir='dist', alias, open, proxy, chunkSizeWarningLimit } = faeConfig
+      const {
+        port,
+        base,
+        publicDir,
+        srcDir = 'src',
+        outDir = 'dist',
+        alias,
+        open,
+        proxy,
+        chunkSizeWarningLimit
+      } = faeConfig
       faeConfig.srcDir = srcDir
       faeConfig.outDir = outDir
       watchers = pluginWatchers
@@ -307,9 +379,9 @@ export default async function FaeCore():Promise<Plugin>{
         resolve: {
           alias: {
             '@': resolve(process.cwd(), srcDir.split('/')[0]),
-            'fae': resolve(process.cwd(), srcDir, '.fae'),
+            fae: resolve(process.cwd(), srcDir, '.fae'),
             '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx'),
-            ...alias??{}
+            ...(alias ?? {})
           }
         },
         proxy,
@@ -323,35 +395,12 @@ export default async function FaeCore():Promise<Plugin>{
         }
       }
     },
-    configureServer: (server) => {
+    configureServer: server => {
       const srcDir = faeConfig.srcDir!
       server.watcher.on('all', (event, path, stats) => {
         debounce(() => watchRoutes(server, event, path, srcDir), 150)()
         watchers.forEach(fn => fn(event, path, stats))
       })
-      server.middlewares.use(async (req, res, next) => {
-        // 处理html请求
-        if(
-          req.headers.accept?.includes('text/html') &&
-          !req.url?.startsWith('/@vite') &&
-          !req.url?.includes('.')
-        ){
-          // 这儿的/fae.tsx是在alias中配置的别名
-          let html = await getHtmlTemplate(faeConfig.srcDir!, '/fae.tsx')
-          // 将html交给vite处理(必须，否则热更新等功能无法使用且会报错)
-          html = await server.transformIndexHtml(req.url!, html)
-          res.setHeader('Content-Type', 'text/html')
-          res.end(html)
-        }else{
-          next()
-        }
-      })
-    },
-    writeBundle: async (options, bundle) => {
-      const fileName = Object.values(bundle).find(v => 'isEntry' in v && v.isEntry)!.fileName
-      if(!fileName) return
-      const html = await getHtmlTemplate(faeConfig.srcDir!, fileName)
-      writeFileSync(resolve(options.dir!, 'index.html'), html)
     }
   }
 }

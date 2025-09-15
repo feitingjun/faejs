@@ -82,4 +82,3 @@ export default function KeepAlive(props) {
         return _jsx(Bridge, { bridges: prev.props.bridges, ctx: ctx, children: prev });
     }, _jsx(Wrapper, { bridges: [], name: name, ...args, children: children }))), [props]);
 }
-//# sourceMappingURL=keepAlive.js.map

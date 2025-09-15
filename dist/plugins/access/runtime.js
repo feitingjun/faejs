@@ -20,7 +20,7 @@ export const Access = ({ children, access }) => {
 export const AccessHC = (access) => {
     return (Component) => {
         return (props) => {
-            return _jsx(Access, { access: access, children: _jsx(Component, { ...props }) });
+            return (_jsx(Access, { access: access, children: _jsx(Component, { ...props }) }));
         };
     };
 };
@@ -32,10 +32,10 @@ export default defineRuntime(({ addProvider, addWrapper, appContext: { appConfig
     const { NoAccess } = appConfig;
     addProvider(({ children }) => {
         const [access, setAccess] = useState([]);
-        return _jsx(Context.Provider, { value: {
+        return (_jsx(Context.Provider, { value: {
                 access,
                 setAccess
-            }, children: children });
+            }, children: children }));
     });
     addWrapper(({ children }) => {
         const { access } = useConfig();
@@ -46,4 +46,3 @@ export default defineRuntime(({ addProvider, addWrapper, appContext: { appConfig
         return isAuth ? children : NoAccess ? _jsx(NoAccess, {}) : _jsx(_Fragment, { children: "\u65E0\u6743\u9650" });
     });
 });
-//# sourceMappingURL=runtime.js.map

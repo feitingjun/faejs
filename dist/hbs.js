@@ -41,4 +41,3 @@ export const renderHbsTpl = ({ sourcePath, outPath, data = {} }) => {
         console.log(chalk.red(`加载模板文件失败: ${sourcePath}`));
     }
 };
-//# sourceMappingURL=hbs.js.map

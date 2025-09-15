@@ -16,4 +16,3 @@ export default async function startDevServer() {
         console.error(err);
     });
 }
-//# sourceMappingURL=dev.js.map

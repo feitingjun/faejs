@@ -102,4 +102,3 @@ export function useModel(namespace, selector) {
     }, [namespace]);
     return state;
 }
-//# sourceMappingURL=context.js.map

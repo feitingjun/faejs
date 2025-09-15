@@ -22,4 +22,3 @@ program
     .command('preview')
     .action(() => preview());
 program.parse(process.argv);
-//# sourceMappingURL=index.js.map

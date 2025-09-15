@@ -4,4 +4,3 @@ export function defineFaeConfig(config) { return config; }
 export function definePlugin(plugin) { return plugin; }
 /**定义运行时函数 */
 export function defineRuntime(fn) { return fn; }
-//# sourceMappingURL=define.js.map

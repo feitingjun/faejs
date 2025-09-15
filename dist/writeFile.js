@@ -34,15 +34,15 @@ export function writeFaercTs(root, srcDir) {
 /**写入app.ts文件 */
 export function writeAppTs(root, srcDir) {
     renderHbsTpl({
-        sourcePath: resolve(TML_DIR, 'app.ts.hbs'),
-        outPath: resolve(root, srcDir, 'app.ts'),
+        sourcePath: resolve(TML_DIR, 'app.tsx.hbs'),
+        outPath: resolve(root, srcDir, 'app.tsx')
     });
 }
 /**写入page.tsx文件 */
 export function writeIndexPageTsx(root, srcDir) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'page.tsx.hbs'),
-        outPath: resolve(root, srcDir, 'page.tsx'),
+        outPath: resolve(root, srcDir, 'page.tsx')
     });
 }
 /**创建.fae/index.ts文件 */
@@ -68,7 +68,9 @@ export function writeEntryTsx(outDir, data) {
 export function writeFaeTypesTs(outDir, pageConfigTypes = [], appConfigTypes = []) {
     const all = deepClone([...pageConfigTypes, ...appConfigTypes]).reduce((acc, item) => {
         const index = acc.findIndex(v => v.source === item.source);
-        if (index > -1 && Array.isArray(item.specifier) && Array.isArray(acc[index].specifier)) {
+        if (index > -1 &&
+            Array.isArray(item.specifier) &&
+            Array.isArray(acc[index].specifier)) {
             acc[index].specifier = [...acc[index].specifier, ...item.specifier];
         }
         else {
@@ -97,10 +99,14 @@ export function writeFaeRoutesTs(outDir, manifest) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'manifest.ts.hbs'),
         outPath: resolve(outDir, 'manifest.ts'),
-        data: { manifest: Object.values(manifest).sort((a, b) => {
+        data: {
+            manifest: Object.values(manifest).sort((a, b) => {
                 const nA = a.id.replace(/\/?layout/, ''), nB = b.id.replace(/\/?layout/, '');
-                return nA.length === nB.length ? b.id.indexOf('layout') : nA.length - nB.length;
-            }) }
+                return nA.length === nB.length
+                    ? b.id.indexOf('layout')
+                    : nA.length - nB.length;
+            })
+        }
     });
 }
 /**写入.fae/runtimes.ts */
@@ -115,7 +121,14 @@ export function wirteRuntime(outDir, runtimes) {
 export function wirteTypings(outDir) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'typings.d.ts.hbs'),
-        outPath: resolve(outDir, 'typings.d.ts'),
+        outPath: resolve(outDir, 'typings.d.ts')
+    });
+}
+/**写入index.html */
+export function writeIndexHtml(root) {
+    renderHbsTpl({
+        sourcePath: resolve(TML_DIR, 'index.html.hbs'),
+        outPath: resolve(root, 'index.html')
     });
 }
 /**创建临时文件夹 */
@@ -129,7 +142,9 @@ export function createTmpDir({ root, srcDir, options }) {
     writeFaeIndexts(outDir, exports);
     // 创建.fae/entry.tsx
     writeEntryTsx(outDir, {
-        imports, aheadCodes, tailCodes
+        imports,
+        aheadCodes,
+        tailCodes
     });
     // 创建.fae/types.ts
     writeFaeTypesTs(outDir, pageConfigTypes, appConfigTypes);
@@ -142,4 +157,3 @@ export function createTmpDir({ root, srcDir, options }) {
     // 创建.fae/typings.d.ts
     wirteTypings(outDir);
 }
-//# sourceMappingURL=writeFile.js.map

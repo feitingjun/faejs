@@ -9,4 +9,3 @@ export default definePlugin({
         });
     }
 });
-//# sourceMappingURL=index.js.map

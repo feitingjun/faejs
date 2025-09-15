@@ -20,9 +20,9 @@ const Context = createContext<{
   setAccess: () => {}
 })
 
-export const useAuth = (code: string|string[]) => {
+export const useAuth = (code: string | string[]) => {
   const access = useContext(Context).access
-  if(Array.isArray(code)){
+  if (Array.isArray(code)) {
     return code.some(c => access.includes(c))
   }
   return access.includes(code)
@@ -31,17 +31,21 @@ export const useAuth = (code: string|string[]) => {
 export const Access = ({
   children,
   access
-}:PropsWithChildren<{
-  access: string|string[]
+}: PropsWithChildren<{
+  access: string | string[]
 }>) => {
   const hasAuth = useAuth(access)
   return hasAuth ? children : null
 }
 
-export const AccessHC = (access: string|string[]) => {
+export const AccessHC = (access: string | string[]) => {
   return (Component: React.FC) => {
-    return (props:any) => {
-      return <Access access={access}><Component {...props} /></Access>
+    return (props: any) => {
+      return (
+        <Access access={access}>
+          <Component {...props} />
+        </Access>
+      )
     }
   }
 }
@@ -51,28 +55,29 @@ export const useAccess = () => {
   return { access, setAccess }
 }
 
-export default defineRuntime(({
-  addProvider,
-  addWrapper,
-  appContext: {
-    appConfig
+export default defineRuntime(
+  ({ addProvider, addWrapper, appContext: { appConfig } }) => {
+    const { NoAccess } = appConfig as AccessAppConfig
+    addProvider(({ children }) => {
+      const [access, setAccess] = useState<string[]>([])
+      return (
+        <Context.Provider
+          value={{
+            access,
+            setAccess
+          }}
+        >
+          {children}
+        </Context.Provider>
+      )
+    })
+
+    addWrapper(({ children }) => {
+      const { access } = useConfig<AccessPageConfig>()
+      // 没有定义access的页面不纳入权限管理
+      if (!access) return children
+      const isAuth = useAuth(access)
+      return isAuth ? children : NoAccess ? <NoAccess /> : <>无权限</>
+    })
   }
-}) => {
-  const { NoAccess } = appConfig as AccessAppConfig
-  addProvider(({ children }) => {
-    const [ access, setAccess ] = useState<string[]>([])
-    return <Context.Provider value={{
-      access,
-      setAccess
-    }}>{children}</Context.Provider>
-  })
-  addWrapper(({
-    children
-  }) => {
-    const { access } = useConfig<AccessPageConfig>()
-    // 没有定义access的页面不纳入权限管理
-    if(!access) return children
-    const isAuth = useAuth(access)
-    return isAuth ? children : NoAccess ? <NoAccess /> :<>无权限</>
-  })
-})
+)

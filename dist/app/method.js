@@ -138,4 +138,3 @@ export const createApp = ({ manifest, app: appConfig, runtimes }) => {
     }
     createRoot(rootEle).render(app);
 };
-//# sourceMappingURL=method.js.map

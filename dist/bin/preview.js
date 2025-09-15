@@ -5,4 +5,3 @@ export default async function previewApp() {
     server.printUrls();
     server.bindCLIShortcuts({ print: true });
 }
-//# sourceMappingURL=preview.js.map
