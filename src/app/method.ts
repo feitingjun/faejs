@@ -4,8 +4,7 @@ import {
   StrictMode,
   ReactNode,
   createContext,
-  useContext,
-  ReactElement
+  useContext
 } from 'react'
 import {
   RouteObject,
@@ -14,8 +13,7 @@ import {
   createHashRouter,
   createMemoryRouter,
   LoaderFunction,
-  RouterProvider,
-  Outlet
+  RouterProvider
 } from 'react-router'
 import {
   AppContextType,
@@ -49,28 +47,35 @@ export const useConfig = <T>() => {
   return useRouteLoaderData<UseLoaderDataReturn<unknown, T>>().config
 }
 
-export const useLoaderData = <T=unknown>() => {
+export const useLoaderData = <T = unknown>() => {
   return useRouteLoaderData<UseLoaderDataReturn<T, unknown>>().data
 }
 
-const loader = (module:{
+const loader = (module: {
   loader?: DataLoader
   config?: PageConfig
 }): LoaderFunction => {
-  const { loader: dataLoader, config: pageConfig={} } = module
+  const { loader: dataLoader, config: pageConfig = {} } = module
   return async ({ request }) => {
     const { pathname, search, searchParams } = new URL(request.url)
-    const ctx:DataLoadeContext = {
+    const ctx: DataLoadeContext = {
       pathname,
       search,
       query: Object.fromEntries(searchParams.entries())
     }
-    const data = dataLoader && typeof dataLoader === 'function' ? await dataLoader({ ctx }) : dataLoader
+    const data =
+      dataLoader && typeof dataLoader === 'function'
+        ? await dataLoader({ ctx })
+        : dataLoader
     return {
       data: data,
-      config: typeof pageConfig === 'function' ? await pageConfig({
-        ctx, data
-      }) : pageConfig
+      config:
+        typeof pageConfig === 'function'
+          ? await pageConfig({
+              ctx,
+              data
+            })
+          : pageConfig
     }
   }
 }
@@ -94,15 +99,20 @@ const generateRoutes = (
           const module = await v.component()
           return {
             loader: loader(module),
-            Component: () => wrappers.reduce((acc, fn) => {
-              return createElement(fn, {
-                routeId: v.id,
-                layout: v.layout,
-                path: v.path,
-                pathname: v.pathname,
-                parentId: v.parentId,
-              }, acc);
-            }, createElement(module.default, null))
+            Component: () =>
+              wrappers.reduce((acc, fn) => {
+                return createElement(
+                  fn,
+                  {
+                    routeId: v.id,
+                    layout: v.layout,
+                    path: v.path,
+                    pathname: v.pathname,
+                    parentId: v.parentId
+                  },
+                  acc
+                )
+              }, createElement(module.default, null))
           }
         },
         children: generateRoutes(manifest, wrappers, v.id)
@@ -110,9 +120,11 @@ const generateRoutes = (
     })
 }
 
-
 /**根据路由清单递归生成路由 */
-const generateRoutesByManifest = (manifest: RouteManifest, parentId?: string): (RouteManifestObject & {children?: RouteManifestObject[]})[] => {
+const generateRoutesByManifest = (
+  manifest: RouteManifest,
+  parentId?: string
+): (RouteManifestObject & { children?: RouteManifestObject[] })[] => {
   return Object.values(manifest)
     .filter(v => v.parentId == parentId)
     .map(v => {
@@ -128,19 +140,27 @@ export const createApp = ({
   manifest,
   app: appConfig,
   runtimes
-}:{
-  manifest: ManifestClient,
+}: {
+  manifest: ManifestClient
   app: AppConfig
   runtimes: Runtime[]
 }) => {
-  const { root='app', strict, router: mode, patchManifest, patchRoutes, appData, rootContainer } = appConfig??{}
+  const {
+    root = 'app',
+    strict,
+    router: mode,
+    patchManifest,
+    patchRoutes,
+    appData,
+    rootContainer
+  } = appConfig ?? {}
   // 处理插件运行时
   const providers: Provider[] = []
   const wrappers: Wrapper[] = []
-  const addProvider: RuntimeOptions['addProvider'] = (fn) => {
+  const addProvider: RuntimeOptions['addProvider'] = fn => {
     providers.push(fn)
   }
-  const addWrapper: RuntimeOptions['addWrapper'] = (fn) => {
+  const addWrapper: RuntimeOptions['addWrapper'] = fn => {
     wrappers.push(fn)
   }
   runtimes?.forEach(runtime => {
@@ -155,48 +175,54 @@ export const createApp = ({
   })
 
   let createRouter = createBrowserRouter
-  if(mode === 'hash') {
+  if (mode === 'hash') {
     createRouter = createHashRouter
   }
-  if(mode === 'memory') {
+  if (mode === 'memory') {
     createRouter = createMemoryRouter
   }
-  if(patchManifest && typeof patchManifest === 'function'){
+  if (patchManifest && typeof patchManifest === 'function') {
     manifest = patchManifest(manifest)
   }
   let routes = generateRoutes(manifest, wrappers)
-  if(patchRoutes && typeof patchRoutes === 'function'){
+  if (patchRoutes && typeof patchRoutes === 'function') {
     routes = patchRoutes(routes)
   }
   // 创建router
   const router = createRouter(routes, { basename: '/' })
   // 创建RouterProvider
-  let app:ReactNode = createElement(RouterProvider, { router })
-  
+  let app: ReactNode = createElement(RouterProvider, { router })
+
   // 向RouterProvider外层添加插件中的Provider
   app = providers.reduce((acc, fn) => {
     return createElement(fn, null, acc)
   }, app)
 
   // 向RouterProvider外层添加AppContextProvider
-  app = createElement(AppContext.Provider, { value: {
-    manifest,
-    routes,
-    appData
-  } }, app)
+  app = createElement(
+    AppContext.Provider,
+    {
+      value: {
+        manifest,
+        routes,
+        appData
+      }
+    },
+    app
+  )
 
-  if(rootContainer && typeof rootContainer === 'function'){
+  if (rootContainer && typeof rootContainer === 'function') {
     app = rootContainer(app)
   }
-  if(strict){
+  if (strict) {
     app = createElement(StrictMode, null, app)
   }
 
   let rootEle = document.getElementById(root)
-  if(!rootEle){
+  if (!rootEle) {
     rootEle = document.createElement('div')
     rootEle.id = root
-    document.body.appendChild(rootEle) 
+    document.body.appendChild(rootEle)
   }
   createRoot(rootEle).render(app)
 }
