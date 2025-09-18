@@ -24,12 +24,17 @@ const loader = (module) => {
             search,
             query: Object.fromEntries(searchParams.entries())
         };
-        const data = dataLoader && typeof dataLoader === 'function' ? await dataLoader({ ctx }) : dataLoader;
+        const data = dataLoader && typeof dataLoader === 'function'
+            ? await dataLoader({ ctx })
+            : dataLoader;
         return {
             data: data,
-            config: typeof pageConfig === 'function' ? await pageConfig({
-                ctx, data
-            }) : pageConfig
+            config: typeof pageConfig === 'function'
+                ? await pageConfig({
+                    ctx,
+                    data
+                })
+                : pageConfig
         };
     };
 };
@@ -54,7 +59,7 @@ const generateRoutes = (manifest, wrappers, parentId) => {
                             layout: v.layout,
                             path: v.path,
                             pathname: v.pathname,
-                            parentId: v.parentId,
+                            parentId: v.parentId
                         }, acc);
                     }, createElement(module.default, null))
                 };
@@ -80,10 +85,10 @@ export const createApp = ({ manifest, app: appConfig, runtimes }) => {
     // 处理插件运行时
     const providers = [];
     const wrappers = [];
-    const addProvider = (fn) => {
+    const addProvider = fn => {
         providers.push(fn);
     };
-    const addWrapper = (fn) => {
+    const addWrapper = fn => {
         wrappers.push(fn);
     };
     runtimes?.forEach(runtime => {
@@ -119,11 +124,13 @@ export const createApp = ({ manifest, app: appConfig, runtimes }) => {
         return createElement(fn, null, acc);
     }, app);
     // 向RouterProvider外层添加AppContextProvider
-    app = createElement(AppContext.Provider, { value: {
+    app = createElement(AppContext.Provider, {
+        value: {
             manifest,
             routes,
             appData
-        } }, app);
+        }
+    }, app);
     if (rootContainer && typeof rootContainer === 'function') {
         app = rootContainer(app);
     }
