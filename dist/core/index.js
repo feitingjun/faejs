@@ -119,7 +119,7 @@ async function watchRoutes(server, event, path, srcDir = 'src') {
         writeFaeRoutesTs(resolve(process.cwd(), srcDir, '.fae'), generateRouteManifest(srcDir));
     }
 }
-function loadPlugins(faeConfig) {
+async function loadPlugins(faeConfig) {
     // 运行时配置
     const runtimes = [];
     // 额外的pageConfig类型
@@ -136,6 +136,8 @@ function loadPlugins(faeConfig) {
     const tailCodes = [];
     // 文件变更时触发的函数
     const watchers = [];
+    // vite插件
+    const vitePlugins = [];
     const modifyUserConfig = fn => {
         faeConfig = fn(faeConfig);
     };
@@ -172,8 +174,9 @@ function loadPlugins(faeConfig) {
         const pkgText = readFileSync(`${process.cwd()}/package.json`, 'utf-8');
         const pkg = JSON.parse(pkgText);
         // 执行fae插件
-        faeConfig.plugins.forEach(plugin => {
-            const { setup, runtime } = plugin;
+        for (let i = 0; i < faeConfig.plugins.length; i++) {
+            const plugin = faeConfig.plugins[i];
+            const { setup, runtime, name, ...args } = plugin;
             const context = {
                 mode: process.env.NODE_ENV,
                 root: process.cwd(),
@@ -183,7 +186,10 @@ function loadPlugins(faeConfig) {
             };
             if (runtime)
                 runtimes.push(runtime);
-            setup?.({
+            if (Object.keys(args).length > 0) {
+                vitePlugins.push({ name, ...args });
+            }
+            await setup?.({
                 context,
                 modifyUserConfig,
                 addFile,
@@ -196,7 +202,7 @@ function loadPlugins(faeConfig) {
                 addEntryCodeTail,
                 addWatch
             });
-        });
+        }
     }
     return {
         pageConfigTypes,
@@ -206,7 +212,8 @@ function loadPlugins(faeConfig) {
         aheadCodes,
         tailCodes,
         runtimes,
-        watchers
+        watchers,
+        vitePlugins
     };
 }
 async function getHtmlTemplate(srcDir, fileName) {
@@ -282,7 +289,7 @@ export default async function FaeCore() {
                 faeConfig.plugins.push(jotai);
             if (faeConfig.keepAlive)
                 faeConfig.plugins.push(keepAlive);
-            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = loadPlugins(faeConfig);
+            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers, vitePlugins } = await loadPlugins(faeConfig);
             // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
             const { port, base, publicDir, srcDir = 'src', outDir = 'dist', alias, open, proxy, chunkSizeWarningLimit } = faeConfig;
             faeConfig.srcDir = srcDir;
@@ -326,7 +333,8 @@ export default async function FaeCore() {
                             fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
                         }
                     }
-                }
+                },
+                plugins: vitePlugins
             };
         },
         configureServer: server => {

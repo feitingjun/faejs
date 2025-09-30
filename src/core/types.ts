@@ -46,7 +46,8 @@ export interface AddFileOptions {
 }
 
 /**使类型的某一个属性可选 */
-export type MakePropertyOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type MakePropertyOptional<T, K extends keyof T> = Omit<T, K> &
+  Partial<Pick<T, K>>
 
 /**插件addWatch参数 */
 export type PluginWatcher = (
@@ -68,14 +69,11 @@ export interface PluginOptions {
     userConfig: FaeConfig
     /**项目package.json内容 */
     pkg: Record<string, any>
-  },
+  }
   /**修改用户配置 */
   modifyUserConfig: (fn: (config: FaeConfig) => FaeConfig) => void
   /**添加文件 */
-  addFile: (options: {
-    content: string
-    outPath: string
-  }) => void
+  addFile: (options: { content: string; outPath: string }) => void
   /**根据Handlebars模板写入文件 */
   addFileTemplate: <T extends Record<string, any>>(options: {
     sourcePath: string
@@ -89,19 +87,21 @@ export interface PluginOptions {
   /**添加从fae命名空间导出的模块 */
   addExport: (options: AddFileOptions & { type?: boolean }) => void
   /**在入口文件的最前面添加import */
-  addEntryImport: (options: MakePropertyOptional<AddFileOptions, 'specifier'> ) => void
+  addEntryImport: (
+    options: MakePropertyOptional<AddFileOptions, 'specifier'>
+  ) => void
   /**在入口文件的最前插入代码 */
-  addEntryCodeAhead: (code:string) => void
+  addEntryCodeAhead: (code: string) => void
   /**在入口文件的最后插入代码 */
-  addEntryCodeTail: (code:string) => void
+  addEntryCodeTail: (code: string) => void
   /**文件变更时触发 */
-  addWatch: (fn:PluginWatcher) => void
+  addWatch: (fn: PluginWatcher) => void
 }
 
 /**插件 */
 export interface Plugin extends VitePlugin {
-  name: string,
-  setup?: (options: PluginOptions) => void,
+  name: string
+  setup?: (options: PluginOptions) => void
   runtime?: string
 }
 
@@ -118,13 +118,15 @@ export interface RouteManifestObject {
 export type RouteManifest = Record<string, RouteManifestObject>
 
 export type Provider = ComponentType<PropsWithChildren<{}>>
-export type Wrapper = ComponentType<PropsWithChildren<{
-  routeId: string
-  layout?: boolean
-  path: string
-  pathname: string
-  parentId?: string
-}>>
+export type Wrapper = ComponentType<
+  PropsWithChildren<{
+    routeId: string
+    layout?: boolean
+    path: string
+    pathname: string
+    parentId?: string
+  }>
+>
 
 /**插件运行时参数 */
 export interface RuntimeOptions {
@@ -142,4 +144,4 @@ export interface RuntimeOptions {
 }
 
 /**插件运行时类型 */
-export type Runtime = (options:RuntimeOptions) => void
+export type Runtime = (options: RuntimeOptions) => void

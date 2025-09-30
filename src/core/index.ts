@@ -1,4 +1,9 @@
-import { Plugin, UserConfig as ViteConfig, ViteDevServer } from 'vite'
+import {
+  Plugin,
+  UserConfig as ViteConfig,
+  ViteDevServer,
+  Plugin as VitePlugin
+} from 'vite'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { resolve, relative } from 'path'
 import { renderToString } from 'react-dom/server'
@@ -63,23 +68,26 @@ function generateRouteManifest(src: string = 'src') {
   const ignore = ['**/layout/**/*{[^/],}page.tsx', '**/layout/**/layout.tsx']
   const pages = globSync(include, { cwd: resolve(srcDir, pageDir), ignore })
   // 获取id和文件的映射
-  const idpaths = pages.reduce((prev, file) => {
-    const id = file
-      // 去除路径中文件夹为index的部分
-      .replace(/index\//, '')
-      // 去除结尾的index.tsx(layout才有) | (/)page.tsx | (/).page.tsx | (/)index.page.tsx
-      .replace(/\/?((index)|((((\/|^)index)?\.)?page))?\.tsx$/, '')
-      // 将user.detail 转换为 user/detail格式(简化目录层级)
-      .replace('.', '/')
-      // 将$id转换为:id
-      .replace(/\$(\w+)/, ':$1')
-      // 将$转换为通配符*
-      .replace(/\$$/, '*')
-      // 将404转换为通配符*
-      .replace(/404$/, '*')
-    prev[id || '/'] = file
-    return prev
-  }, {} as Record<string, string>)
+  const idpaths = pages.reduce(
+    (prev, file) => {
+      const id = file
+        // 去除路径中文件夹为index的部分
+        .replace(/index\//, '')
+        // 去除结尾的index.tsx(layout才有) | (/)page.tsx | (/).page.tsx | (/)index.page.tsx
+        .replace(/\/?((index)|((((\/|^)index)?\.)?page))?\.tsx$/, '')
+        // 将user.detail 转换为 user/detail格式(简化目录层级)
+        .replace('.', '/')
+        // 将$id转换为:id
+        .replace(/\$(\w+)/, ':$1')
+        // 将$转换为通配符*
+        .replace(/\$$/, '*')
+        // 将404转换为通配符*
+        .replace(/404$/, '*')
+      prev[id || '/'] = file
+      return prev
+    },
+    {} as Record<string, string>
+  )
   const ids = Object.keys(idpaths).sort((a, b) => {
     const nA = a.replace(/\/?layout/, ''),
       nB = b.replace(/\/?layout/, '')
@@ -153,7 +161,7 @@ async function watchRoutes(
   }
 }
 
-function loadPlugins(faeConfig: FaeConfig) {
+async function loadPlugins(faeConfig: FaeConfig) {
   // 运行时配置
   const runtimes: string[] = []
   // 额外的pageConfig类型
@@ -170,6 +178,8 @@ function loadPlugins(faeConfig: FaeConfig) {
   const tailCodes: string[] = []
   // 文件变更时触发的函数
   const watchers: PluginWatcher[] = []
+  // vite插件
+  const vitePlugins: VitePlugin[] = []
   const modifyUserConfig: PluginOptions['modifyUserConfig'] = fn => {
     faeConfig = fn(faeConfig)
   }
@@ -206,8 +216,9 @@ function loadPlugins(faeConfig: FaeConfig) {
     const pkgText = readFileSync(`${process.cwd()}/package.json`, 'utf-8')
     const pkg = JSON.parse(pkgText)
     // 执行fae插件
-    faeConfig.plugins.forEach(plugin => {
-      const { setup, runtime } = plugin
+    for (let i = 0; i < faeConfig.plugins.length; i++) {
+      const plugin = faeConfig.plugins[i]
+      const { setup, runtime, name, ...args } = plugin
       const context = {
         mode: process.env.NODE_ENV as ViteConfig['mode'],
         root: process.cwd(),
@@ -216,7 +227,10 @@ function loadPlugins(faeConfig: FaeConfig) {
         pkg
       }
       if (runtime) runtimes.push(runtime)
-      setup?.({
+      if (Object.keys(args).length > 0) {
+        vitePlugins.push({ name, ...args })
+      }
+      await setup?.({
         context,
         modifyUserConfig,
         addFile,
@@ -229,7 +243,7 @@ function loadPlugins(faeConfig: FaeConfig) {
         addEntryCodeTail,
         addWatch
       })
-    })
+    }
   }
   return {
     pageConfigTypes,
@@ -239,7 +253,8 @@ function loadPlugins(faeConfig: FaeConfig) {
     aheadCodes,
     tailCodes,
     runtimes,
-    watchers
+    watchers,
+    vitePlugins
   }
 }
 
@@ -337,8 +352,9 @@ export default async function FaeCore(): Promise<Plugin> {
         aheadCodes,
         tailCodes,
         runtimes,
-        watchers: pluginWatchers
-      } = loadPlugins(faeConfig)
+        watchers: pluginWatchers,
+        vitePlugins
+      } = await loadPlugins(faeConfig)
       // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
       const {
         port,
@@ -392,7 +408,8 @@ export default async function FaeCore(): Promise<Plugin> {
               fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
             }
           }
-        }
+        },
+        plugins: vitePlugins
       }
     },
     configureServer: server => {
