@@ -229,7 +229,7 @@ function loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers }) {
         }
     });
 }
-/**vite插件，负责解析.faerc.ts配置，生成约定式路由，以及提供fae插件功能*/
+/**vite插件，负责解析配置，生成约定式路由，以及提供fae插件功能*/
 export default function FaeCore(faeConfig = {}) {
     const { srcDir = 'src', plugins = [], model, reactActivation, access, atom, jotai, keepAlive } = faeConfig;
     let watchers = [];
@@ -252,7 +252,7 @@ export default function FaeCore(faeConfig = {}) {
                 plugins.push(jotaiPlugin);
             if (keepAlive)
                 plugins.push(keepAlivePlugin);
-            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers, } = await loadPlugins(faeConfig);
+            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = await loadPlugins(faeConfig);
             watchers = pluginWatchers;
             loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers });
             // 创建临时文件夹
@@ -276,7 +276,7 @@ export default function FaeCore(faeConfig = {}) {
                     alias: {
                         '@': resolve(process.cwd(), srcDir.split('/')[0]),
                         fae: resolve(process.cwd(), srcDir, '.fae'),
-                        '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx'),
+                        '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
                     }
                 },
                 build: {
@@ -285,7 +285,7 @@ export default function FaeCore(faeConfig = {}) {
                             fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
                         }
                     }
-                },
+                }
             };
         },
         configureServer: server => {

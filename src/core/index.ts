@@ -1,7 +1,4 @@
-import {
-  PluginOption,
-  UserConfig as ViteConfig,
-} from 'vite'
+import { PluginOption, UserConfig as ViteConfig } from 'vite'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { resolve, relative } from 'path'
 import { globSync } from 'glob'
@@ -62,26 +59,23 @@ function generateRouteManifest(src: string = 'src') {
   const ignore = ['**/layout/**/*{[^/],}page.tsx', '**/layout/**/layout.tsx']
   const pages = globSync(include, { cwd: resolve(srcDir, pageDir), ignore })
   // 获取id和文件的映射
-  const idpaths = pages.reduce(
-    (prev, file) => {
-      const id = file
-        // 去除路径中文件夹为index的部分
-        .replace(/index\//, '')
-        // 去除结尾的index.tsx(layout才有) | (/)page.tsx | (/).page.tsx | (/)index.page.tsx
-        .replace(/\/?((index)|((((\/|^)index)?\.)?page))?\.tsx$/, '')
-        // 将user.detail 转换为 user/detail格式(简化目录层级)
-        .replace('.', '/')
-        // 将$id转换为:id
-        .replace(/\$(\w+)/, ':$1')
-        // 将$转换为通配符*
-        .replace(/\$$/, '*')
-        // 将404转换为通配符*
-        .replace(/404$/, '*')
-      prev[id || '/'] = file
-      return prev
-    },
-    {} as Record<string, string>
-  )
+  const idpaths = pages.reduce((prev, file) => {
+    const id = file
+      // 去除路径中文件夹为index的部分
+      .replace(/index\//, '')
+      // 去除结尾的index.tsx(layout才有) | (/)page.tsx | (/).page.tsx | (/)index.page.tsx
+      .replace(/\/?((index)|((((\/|^)index)?\.)?page))?\.tsx$/, '')
+      // 将user.detail 转换为 user/detail格式(简化目录层级)
+      .replace('.', '/')
+      // 将$id转换为:id
+      .replace(/\$(\w+)/, ':$1')
+      // 将$转换为通配符*
+      .replace(/\$$/, '*')
+      // 将404转换为通配符*
+      .replace(/404$/, '*')
+    prev[id || '/'] = file
+    return prev
+  }, {} as Record<string, string>)
   const ids = Object.keys(idpaths).sort((a, b) => {
     const nA = a.replace(/\/?layout/, ''),
       nB = b.replace(/\/?layout/, '')
@@ -126,11 +120,7 @@ function generateRouteManifest(src: string = 'src') {
 }
 
 /**监听路由文件变化 */
-async function watchRoutes(
-  event: string,
-  path: string,
-  srcDir = 'src'
-) {
+async function watchRoutes(event: string, path: string, srcDir = 'src') {
   // 获取项目根目录的的路径
   path = relative(process.cwd(), path)
   // 重新生成路由
@@ -281,9 +271,18 @@ function loadGlobalStyle(
   })
 }
 
-/**vite插件，负责解析.faerc.ts配置，生成约定式路由，以及提供fae插件功能*/
-export default function FaeCore(faeConfig: FaeConfig={}): PluginOption {
-  const { srcDir = 'src', plugins=[], model, reactActivation, access, atom, jotai, keepAlive} = faeConfig
+/**vite插件，负责解析配置，生成约定式路由，以及提供fae插件功能*/
+export default function FaeCore(faeConfig: FaeConfig = {}): PluginOption {
+  const {
+    srcDir = 'src',
+    plugins = [],
+    model,
+    reactActivation,
+    access,
+    atom,
+    jotai,
+    keepAlive
+  } = faeConfig
   let watchers: PluginWatcher[] = []
   return {
     name: 'fae-core',
@@ -306,7 +305,7 @@ export default function FaeCore(faeConfig: FaeConfig={}): PluginOption {
         aheadCodes,
         tailCodes,
         runtimes,
-        watchers: pluginWatchers,
+        watchers: pluginWatchers
       } = await loadPlugins(faeConfig)
       watchers = pluginWatchers
       loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers })
@@ -331,7 +330,7 @@ export default function FaeCore(faeConfig: FaeConfig={}): PluginOption {
           alias: {
             '@': resolve(process.cwd(), srcDir.split('/')[0]),
             fae: resolve(process.cwd(), srcDir, '.fae'),
-            '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx'),
+            '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
           }
         },
         build: {
@@ -340,7 +339,7 @@ export default function FaeCore(faeConfig: FaeConfig={}): PluginOption {
               fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
             }
           }
-        },
+        }
       }
     },
     configureServer: server => {
