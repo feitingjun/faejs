@@ -1,5 +1,5 @@
 import { FaeConfig, Plugin, Runtime } from './types';
-/**定义.faerc.ts用户配置 */
+/**定义用户配置 */
 export declare function defineFaeConfig(config: FaeConfig): FaeConfig;
 /**定义插件 */
 export declare function definePlugin<T extends Plugin | ((...args: any[]) => Plugin)>(plugin: T): T;

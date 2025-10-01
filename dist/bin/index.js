@@ -35,3 +35,4 @@ async function createApp() {
     console.log(chalk.green(`项目${projectName}创建成功`));
 }
 createApp();
+//# sourceMappingURL=index.js.map

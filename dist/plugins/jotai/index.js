@@ -1,7 +1,6 @@
 import { resolve } from 'path';
 import { definePlugin } from "../../core/define.js";
 export default definePlugin({
-    name: 'fae-jotai',
     setup: ({ addExport }) => {
         addExport({
             specifier: ['atom', 'useAtom'],
@@ -9,3 +8,4 @@ export default definePlugin({
         });
     }
 });
+//# sourceMappingURL=index.js.map

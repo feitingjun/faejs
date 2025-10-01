@@ -2,12 +2,7 @@ import { definePlugin } from '../../core/define'
 import { resolve } from 'path'
 
 export default definePlugin({
-  name: 'fae-access',
-  setup: ({
-    addPageConfigType,
-    addExport,
-    addAppConfigType
-  }) => {
+  setup: ({ addPageConfigType, addExport, addAppConfigType }) => {
     addPageConfigType({
       specifier: ['AccessPageConfig'],
       source: resolve(import.meta.dirname, 'runtime')

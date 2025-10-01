@@ -1,7 +1,6 @@
 import { definePlugin } from "../../core/define.js";
 import { resolve } from 'path';
 export default definePlugin({
-    name: 'fae-react-activation',
     setup({ addExport, addEntryImport, addPageConfigType, addAppConfigType }) {
         addPageConfigType({
             specifier: ['KeepAlivePageConfig'],
@@ -38,3 +37,4 @@ export default definePlugin({
     },
     runtime: resolve(import.meta.dirname, 'runtime')
 });
+//# sourceMappingURL=index.js.map

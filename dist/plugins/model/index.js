@@ -1,9 +1,7 @@
 import { resolve, basename, extname, dirname } from 'path';
 import { globSync } from 'glob';
 import { definePlugin } from "../../core/define.js";
-const include = [
-    'models/**/*.{ts,js}',
-];
+const include = ['models/**/*.{ts,js}'];
 const getModels = (srcDir = 'src') => {
     srcDir = resolve(process.cwd(), srcDir);
     const files = globSync(include, { cwd: srcDir });
@@ -13,7 +11,6 @@ const getModels = (srcDir = 'src') => {
     });
 };
 export default definePlugin({
-    name: 'fae-model',
     setup: ({ context, addWatch, addFileTemplate, addExport }) => {
         addExport({
             specifier: ['useModel'],
@@ -39,3 +36,4 @@ export default definePlugin({
     },
     runtime: resolve(import.meta.dirname, 'runtime')
 });
+//# sourceMappingURL=index.js.map

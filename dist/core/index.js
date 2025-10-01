@@ -10,6 +10,7 @@ import accessPlugin from "../plugins/access/index.js";
 import atomPlugin from "../plugins/atom/index.js";
 import jotaiPlugin from "../plugins/jotai/index.js";
 import keepAlivePlugin from "../plugins/keepAlive/index.js";
+import pandacssPlugin from "../plugins/pandacss/index.js";
 /**是否需要重新生成路由 */
 function needGenerateRoutes(path, srcDir = 'src') {
     // 匹配src目录下的layout(s).tsx | layout(s)/index.tsx
@@ -106,7 +107,7 @@ async function watchRoutes(event, path, srcDir = 'src') {
         writeFaeRoutesTs(resolve(process.cwd(), srcDir, '.fae'), generateRouteManifest(srcDir));
     }
 }
-async function loadPlugins(faeConfig) {
+async function loadPlugins(plugins, faeConfig) {
     // 运行时配置
     const runtimes = [];
     // 额外的pageConfig类型
@@ -154,13 +155,13 @@ async function loadPlugins(faeConfig) {
         watchers.push(fn);
     };
     // 解析fae插件
-    if (faeConfig.plugins && faeConfig.plugins.length > 0) {
+    if (plugins && plugins.length > 0) {
         // 动态导入package.json
         const pkgText = readFileSync(`${process.cwd()}/package.json`, 'utf-8');
         const pkg = JSON.parse(pkgText);
         // 执行fae插件
-        for (let i = 0; i < faeConfig.plugins.length; i++) {
-            const plugin = faeConfig.plugins[i];
+        for (let i = 0; i < plugins.length; i++) {
+            const plugin = plugins[i];
             const { setup, runtime } = plugin;
             const context = {
                 mode: process.env.NODE_ENV,
@@ -231,7 +232,7 @@ function loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers }) {
 }
 /**vite插件，负责解析配置，生成约定式路由，以及提供fae插件功能*/
 export default function FaeCore(faeConfig = {}) {
-    const { srcDir = 'src', plugins = [], model, reactActivation, access, atom, jotai, keepAlive } = faeConfig;
+    const { srcDir = 'src', plugins = [], model, reactActivation, access, atom, jotai, keepAlive, pandacss } = faeConfig;
     let watchers = [];
     return {
         name: 'fae-core',
@@ -252,7 +253,9 @@ export default function FaeCore(faeConfig = {}) {
                 plugins.push(jotaiPlugin);
             if (keepAlive)
                 plugins.push(keepAlivePlugin);
-            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = await loadPlugins(faeConfig);
+            if (pandacss)
+                plugins.push(pandacssPlugin);
+            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = await loadPlugins(plugins, faeConfig);
             watchers = pluginWatchers;
             loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers });
             // 创建临时文件夹
@@ -296,3 +299,4 @@ export default function FaeCore(faeConfig = {}) {
         }
     };
 }
+//# sourceMappingURL=index.js.map

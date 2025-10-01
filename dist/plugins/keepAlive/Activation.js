@@ -76,3 +76,4 @@ export default class Activation {
         }
     };
 }
+//# sourceMappingURL=activation.js.map

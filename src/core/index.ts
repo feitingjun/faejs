@@ -10,7 +10,8 @@ import {
   MakePropertyOptional,
   PluginWatcher,
   PluginOptions,
-  RouteManifest
+  RouteManifest,
+  Plugin
 } from './types'
 import { createTmpDir, writeEntryTsx, writeFaeRoutesTs } from '../writeFile'
 import modelPlugin from '../plugins/model'
@@ -19,6 +20,7 @@ import accessPlugin from '../plugins/access'
 import atomPlugin from '../plugins/atom'
 import jotaiPlugin from '../plugins/jotai'
 import keepAlivePlugin from '../plugins/keepAlive'
+import pandacssPlugin from '../plugins/pandacss'
 
 /**是否需要重新生成路由 */
 function needGenerateRoutes(path: string, srcDir = 'src') {
@@ -59,23 +61,26 @@ function generateRouteManifest(src: string = 'src') {
   const ignore = ['**/layout/**/*{[^/],}page.tsx', '**/layout/**/layout.tsx']
   const pages = globSync(include, { cwd: resolve(srcDir, pageDir), ignore })
   // 获取id和文件的映射
-  const idpaths = pages.reduce((prev, file) => {
-    const id = file
-      // 去除路径中文件夹为index的部分
-      .replace(/index\//, '')
-      // 去除结尾的index.tsx(layout才有) | (/)page.tsx | (/).page.tsx | (/)index.page.tsx
-      .replace(/\/?((index)|((((\/|^)index)?\.)?page))?\.tsx$/, '')
-      // 将user.detail 转换为 user/detail格式(简化目录层级)
-      .replace('.', '/')
-      // 将$id转换为:id
-      .replace(/\$(\w+)/, ':$1')
-      // 将$转换为通配符*
-      .replace(/\$$/, '*')
-      // 将404转换为通配符*
-      .replace(/404$/, '*')
-    prev[id || '/'] = file
-    return prev
-  }, {} as Record<string, string>)
+  const idpaths = pages.reduce(
+    (prev, file) => {
+      const id = file
+        // 去除路径中文件夹为index的部分
+        .replace(/index\//, '')
+        // 去除结尾的index.tsx(layout才有) | (/)page.tsx | (/).page.tsx | (/)index.page.tsx
+        .replace(/\/?((index)|((((\/|^)index)?\.)?page))?\.tsx$/, '')
+        // 将user.detail 转换为 user/detail格式(简化目录层级)
+        .replace('.', '/')
+        // 将$id转换为:id
+        .replace(/\$(\w+)/, ':$1')
+        // 将$转换为通配符*
+        .replace(/\$$/, '*')
+        // 将404转换为通配符*
+        .replace(/404$/, '*')
+      prev[id || '/'] = file
+      return prev
+    },
+    {} as Record<string, string>
+  )
   const ids = Object.keys(idpaths).sort((a, b) => {
     const nA = a.replace(/\/?layout/, ''),
       nB = b.replace(/\/?layout/, '')
@@ -132,7 +137,7 @@ async function watchRoutes(event: string, path: string, srcDir = 'src') {
   }
 }
 
-async function loadPlugins(faeConfig: FaeConfig) {
+async function loadPlugins(plugins: Plugin[], faeConfig: FaeConfig) {
   // 运行时配置
   const runtimes: string[] = []
   // 额外的pageConfig类型
@@ -180,13 +185,13 @@ async function loadPlugins(faeConfig: FaeConfig) {
     watchers.push(fn)
   }
   // 解析fae插件
-  if (faeConfig.plugins && faeConfig.plugins.length > 0) {
+  if (plugins && plugins.length > 0) {
     // 动态导入package.json
     const pkgText = readFileSync(`${process.cwd()}/package.json`, 'utf-8')
     const pkg = JSON.parse(pkgText)
     // 执行fae插件
-    for (let i = 0; i < faeConfig.plugins.length; i++) {
-      const plugin = faeConfig.plugins[i]
+    for (let i = 0; i < plugins.length; i++) {
+      const plugin = plugins[i]
       const { setup, runtime } = plugin
       const context = {
         mode: process.env.NODE_ENV as ViteConfig['mode'],
@@ -281,7 +286,8 @@ export default function FaeCore(faeConfig: FaeConfig = {}): PluginOption {
     access,
     atom,
     jotai,
-    keepAlive
+    keepAlive,
+    pandacss
   } = faeConfig
   let watchers: PluginWatcher[] = []
   return {
@@ -297,6 +303,7 @@ export default function FaeCore(faeConfig: FaeConfig = {}): PluginOption {
       if (atom) plugins.push(atomPlugin)
       if (jotai) plugins.push(jotaiPlugin)
       if (keepAlive) plugins.push(keepAlivePlugin)
+      if (pandacss) plugins.push(pandacssPlugin)
       const {
         pageConfigTypes,
         appConfigTypes,
@@ -306,7 +313,7 @@ export default function FaeCore(faeConfig: FaeConfig = {}): PluginOption {
         tailCodes,
         runtimes,
         watchers: pluginWatchers
-      } = await loadPlugins(faeConfig)
+      } = await loadPlugins(plugins, faeConfig)
       watchers = pluginWatchers
       loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers })
       // 创建临时文件夹

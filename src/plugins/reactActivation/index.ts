@@ -2,13 +2,7 @@ import { definePlugin } from '../../core/define'
 import { resolve } from 'path'
 
 export default definePlugin({
-  name: 'fae-react-activation',
-  setup({
-    addExport,
-    addEntryImport,
-    addPageConfigType,
-    addAppConfigType
-  }) {
+  setup({ addExport, addEntryImport, addPageConfigType, addAppConfigType }) {
     addPageConfigType({
       specifier: ['KeepAlivePageConfig'],
       source: resolve(import.meta.dirname, 'runtime')

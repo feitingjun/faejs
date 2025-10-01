@@ -1,7 +1,6 @@
 import { definePlugin } from "../../core/define.js";
 import { resolve } from 'path';
 export default definePlugin({
-    name: 'fae-access',
     setup: ({ addPageConfigType, addExport, addAppConfigType }) => {
         addPageConfigType({
             specifier: ['AccessPageConfig'],
@@ -18,3 +17,4 @@ export default definePlugin({
     },
     runtime: resolve(import.meta.dirname, 'runtime')
 });
+//# sourceMappingURL=index.js.map

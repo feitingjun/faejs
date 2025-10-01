@@ -114,4 +114,6 @@ export interface FaeConfig {
     jotai?: boolean;
     /**是否启用keepAlive插件(仿react-activation自己的实现) */
     keepAlive?: boolean;
+    /**是否启用pandacss插件 */
+    pandacss?: boolean | string;
 }

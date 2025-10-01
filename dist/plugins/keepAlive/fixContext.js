@@ -36,3 +36,4 @@ function repair(mods, names) {
 repair(React, ['createElement']);
 repair(jsxRuntime, ['jsx', 'jsxs']);
 repair(jsxDevRuntime, ['jsxDEV']);
+//# sourceMappingURL=fixContext.js.map

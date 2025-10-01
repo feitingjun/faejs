@@ -19,3 +19,4 @@ export default defineRuntime(({ addProvider }) => {
         return _jsx(ModelProviderWrapper, { children: children });
     });
 });
+//# sourceMappingURL=runtime.js.map

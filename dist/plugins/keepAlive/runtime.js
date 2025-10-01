@@ -18,3 +18,4 @@ export default defineRuntime(({ addProvider, addWrapper, appContext: { appConfig
         return _jsx(KeepAlive, { name: routeId + search, pagename: pagename, children: children });
     });
 });
+//# sourceMappingURL=runtime.js.map

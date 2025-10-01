@@ -156,3 +156,4 @@ export function createTmpDir({ root, srcDir, options }) {
     // 创建.fae/typings.d.ts
     wirteTypings(outDir);
 }
+//# sourceMappingURL=writeFile.js.map
