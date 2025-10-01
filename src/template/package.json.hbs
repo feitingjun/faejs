@@ -1,17 +1,20 @@
 {
   "private": true,
   "name": "{{projectName}}",
+  "type": "module",
   "description": "{{description}}",
   "scripts": {
-    "start": "fae dev",
-    "build": "fae build",
-    "preview": "fae preview"
+    "start": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@faejs/app": "github:feitingjun/faejs#master",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router": "^7.3.0"
+    "react-router": "^7.3.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "vite": "^7.1.7"
   },
   "devDependencies": {
     "@types/react": "^19.0.10",

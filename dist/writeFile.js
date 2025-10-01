@@ -23,14 +23,6 @@ export function writeTsConfigJson(root, srcDir) {
         data: { srcDir, srcDirRoot: srcDir.split('/')[0] }
     });
 }
-/**写入faerc.ts文件 */
-export function writeFaercTs(root, srcDir) {
-    renderHbsTpl({
-        sourcePath: resolve(TML_DIR, '.faerc.ts.hbs'),
-        outPath: resolve(root, '.faerc.ts'),
-        data: { srcDir }
-    });
-}
 /**写入app.ts文件 */
 export function writeAppTs(root, srcDir) {
     renderHbsTpl({
@@ -43,6 +35,13 @@ export function writeIndexPageTsx(root, srcDir) {
     renderHbsTpl({
         sourcePath: resolve(TML_DIR, 'page.tsx.hbs'),
         outPath: resolve(root, srcDir, 'page.tsx')
+    });
+}
+/**写入vite.config.ts文件 */
+export function writeViteConfigTs(root) {
+    renderHbsTpl({
+        sourcePath: resolve(TML_DIR, 'vite.config.ts.hbs'),
+        outPath: resolve(root, 'vite.config.ts')
     });
 }
 /**创建.fae/index.ts文件 */

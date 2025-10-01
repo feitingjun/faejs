@@ -3,7 +3,7 @@ import type {
   PageConfig as PageRouteConfig,
   DataLoader,
   DataLoadeContext
-} from '@faejs/app'
+} from '@faejs/app/client'
 {{#each all~}}
 import {{#isArray this.specifier~}}
     { {{#each this.specifier}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} }

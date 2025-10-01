@@ -62,9 +62,9 @@ const build = () => {
         const visitor = (node) => {
           const libname = node.moduleSpecifier?.text
           // 给 import x from 'x' 这种格式添加后缀名
-          if(ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+          if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
             const ext = needAddSuffix(dir, libname)
-            if(ext){
+            if (ext) {
               // 更新导入声明
               return ts.factory.updateImportDeclaration(
                 node,
@@ -76,9 +76,9 @@ const build = () => {
             }
           }
           // 给 export x from 'x' 这种格式添加后缀名
-          if(ts.isExportDeclaration(node) && !node.exportClause && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+          if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
             const ext = needAddSuffix(dir, libname)
-            if(ext){
+            if (ext) {
               return ts.factory.updateExportDeclaration(
                 node,
                 node.modifiers,
@@ -90,9 +90,9 @@ const build = () => {
             }
           }
           // 给 import('x') 这种格式添加后缀名
-          if(ts.isCallExpression(node) && node.arguments?.[0] && ts.isStringLiteral(node.arguments[0]) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+          if (ts.isCallExpression(node) && node.arguments?.[0] && ts.isStringLiteral(node.arguments[0]) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
             const ext = needAddSuffix(dir, node.arguments[0].text)
-            if(ext){
+            if (ext) {
               return ts.factory.updateCallExpression(
                 node,
                 node.expression,
@@ -112,7 +112,7 @@ const build = () => {
   console.log(`\x1b[32m构建成功\x1b[0m`)
 }
 
-if(!process.argv.includes('-d')){
+if (!process.argv.includes('-d')) {
   fs.rmdirSync('dist', { recursive: true })
 }
 build()

@@ -12,21 +12,30 @@
       "cwd": "${workspaceFolder}/my-app",
       "preLaunchTask": "link",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["install"]
-    }, {
+      "runtimeArgs": [
+        "install"
+      ]
+    },
+    {
       "name": "Dev命令调试",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/my-app",
-      "program": "${workspaceFolder}/dist/bin/index.js",
-      "args": ["dev"]
-    }, {
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start"
+      ]
+    },
+    {
       "name": "Build命令调试",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/my-app",
       "program": "${workspaceFolder}/dist/bin/index.js",
-      "args": ["build"]
+      "args": [
+        "build"
+      ]
     }
   ]
 }

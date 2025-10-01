@@ -1,18 +1,15 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, relative } from 'path';
-import { renderToString } from 'react-dom/server';
 import { globSync } from 'glob';
-import { createElement } from 'react';
-import { dynamicImport, debounce, chalk, getLocalIp } from "../utils.js";
+import { debounce } from "../utils.js";
 import { renderHbsTpl } from "../hbs.js";
 import { createTmpDir, writeEntryTsx, writeFaeRoutesTs } from "../writeFile.js";
-import model from "../plugins/model/index.js";
-import reactActivation from "../plugins/reactActivation/index.js";
-import access from "../plugins/access/index.js";
-import atom from "../plugins/atom/index.js";
-import jotai from "../plugins/jotai/index.js";
-import keepAlive from "../plugins/keepAlive/index.js";
-const __dirname = import.meta.dirname;
+import modelPlugin from "../plugins/model/index.js";
+import reactActivationPlugin from "../plugins/reactActivation/index.js";
+import accessPlugin from "../plugins/access/index.js";
+import atomPlugin from "../plugins/atom/index.js";
+import jotaiPlugin from "../plugins/jotai/index.js";
+import keepAlivePlugin from "../plugins/keepAlive/index.js";
 /**是否需要重新生成路由 */
 function needGenerateRoutes(path, srcDir = 'src') {
     // 匹配src目录下的layout(s).tsx | layout(s)/index.tsx
@@ -101,19 +98,9 @@ function generateRouteManifest(src = 'src') {
     return routesManifest;
 }
 /**监听路由文件变化 */
-async function watchRoutes(server, event, path, srcDir = 'src') {
+async function watchRoutes(event, path, srcDir = 'src') {
     // 获取项目根目录的的路径
     path = relative(process.cwd(), path);
-    // 用户配置变更后重启服务器
-    if (path === '.faerc.ts') {
-        console.log('.faerc.ts 文件变更，服务器重启中...');
-        return server.restart(true).then(() => {
-            const port = server.config.server.port;
-            console.log('服务器重启成功');
-            console.log(`  - Local: ${chalk.green(`http://localhost:${port}`)}`);
-            console.log(`  - Network: ${chalk.green(`http://${getLocalIp()}:${port}`)}\n`);
-        });
-    }
     // 重新生成路由
     if (event !== 'change' && needGenerateRoutes(path)) {
         writeFaeRoutesTs(resolve(process.cwd(), srcDir, '.fae'), generateRouteManifest(srcDir));
@@ -136,8 +123,6 @@ async function loadPlugins(faeConfig) {
     const tailCodes = [];
     // 文件变更时触发的函数
     const watchers = [];
-    // vite插件
-    const vitePlugins = [];
     const modifyUserConfig = fn => {
         faeConfig = fn(faeConfig);
     };
@@ -176,7 +161,7 @@ async function loadPlugins(faeConfig) {
         // 执行fae插件
         for (let i = 0; i < faeConfig.plugins.length; i++) {
             const plugin = faeConfig.plugins[i];
-            const { setup, runtime, name, ...args } = plugin;
+            const { setup, runtime } = plugin;
             const context = {
                 mode: process.env.NODE_ENV,
                 root: process.cwd(),
@@ -186,9 +171,6 @@ async function loadPlugins(faeConfig) {
             };
             if (runtime)
                 runtimes.push(runtime);
-            if (Object.keys(args).length > 0) {
-                vitePlugins.push({ name, ...args });
-            }
             await setup?.({
                 context,
                 modifyUserConfig,
@@ -212,24 +194,8 @@ async function loadPlugins(faeConfig) {
         aheadCodes,
         tailCodes,
         runtimes,
-        watchers,
-        vitePlugins
+        watchers
     };
-}
-async function getHtmlTemplate(srcDir, fileName) {
-    let temp = resolve(process.cwd(), srcDir, 'document.tsx');
-    if (!existsSync(temp)) {
-        temp = resolve(__dirname, '..', 'template', 'document.js');
-    }
-    const module = (await dynamicImport(temp)).default;
-    // 将document.tsx模版转换为html字符串
-    return renderToString(createElement(module, {
-        entry: createElement('script', {
-            type: 'module',
-            key: 'entry',
-            src: fileName
-        })
-    }));
 }
 /**加载全局样式文件 */
 function loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers }) {
@@ -264,44 +230,37 @@ function loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers }) {
     });
 }
 /**vite插件，负责解析.faerc.ts配置，生成约定式路由，以及提供fae插件功能*/
-export default async function FaeCore() {
-    let faeConfig = {};
+export default function FaeCore(faeConfig = {}) {
+    const { srcDir = 'src', plugins = [], model, reactActivation, access, atom, jotai, keepAlive } = faeConfig;
     let watchers = [];
     return {
         name: 'fae-core',
         enforce: 'pre',
-        config: async (config) => {
+        config: async () => {
             // 用户配置文件变更时重置
             watchers = [];
-            faeConfig = (await dynamicImport(`${process.cwd()}/.faerc.ts`)).default;
             // 添加默认插件
-            if (!faeConfig.plugins)
-                faeConfig.plugins = [];
-            if (faeConfig.model)
-                faeConfig.plugins.push(model);
-            if (faeConfig.reactActivation)
-                faeConfig.plugins.push(reactActivation);
-            if (faeConfig.access)
-                faeConfig.plugins.push(access);
-            if (faeConfig.atom)
-                faeConfig.plugins.push(atom);
-            if (faeConfig.jotai)
-                faeConfig.plugins.push(jotai);
-            if (faeConfig.keepAlive)
-                faeConfig.plugins.push(keepAlive);
-            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers, vitePlugins } = await loadPlugins(faeConfig);
-            // 插件内可能更改配置，所以在插件处理完成后再从faeConfig内解构
-            const { port, base, publicDir, srcDir = 'src', outDir = 'dist', alias, open, proxy, chunkSizeWarningLimit } = faeConfig;
-            faeConfig.srcDir = srcDir;
-            faeConfig.outDir = outDir;
+            if (model)
+                plugins.push(modelPlugin);
+            if (reactActivation)
+                plugins.push(reactActivationPlugin);
+            if (access)
+                plugins.push(accessPlugin);
+            if (atom)
+                plugins.push(atomPlugin);
+            if (jotai)
+                plugins.push(jotaiPlugin);
+            if (keepAlive)
+                plugins.push(keepAlivePlugin);
+            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers, } = await loadPlugins(faeConfig);
             watchers = pluginWatchers;
             loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers });
             // 创建临时文件夹
             createTmpDir({
                 root: process.cwd(),
-                srcDir: faeConfig.srcDir || 'src',
+                srcDir: srcDir || 'src',
                 options: {
-                    manifest: generateRouteManifest(faeConfig.srcDir),
+                    manifest: generateRouteManifest(srcDir),
                     pageConfigTypes,
                     appConfigTypes,
                     exports,
@@ -313,34 +272,25 @@ export default async function FaeCore() {
             });
             // 返回的配置将与原有的配置深度合并
             return {
-                server: { port, open },
-                base,
-                outDir,
-                publicDir,
                 resolve: {
                     alias: {
                         '@': resolve(process.cwd(), srcDir.split('/')[0]),
                         fae: resolve(process.cwd(), srcDir, '.fae'),
                         '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx'),
-                        ...(alias ?? {})
                     }
                 },
-                proxy,
                 build: {
-                    chunkSizeWarningLimit,
                     rollupOptions: {
                         input: {
                             fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
                         }
                     }
                 },
-                plugins: vitePlugins
             };
         },
         configureServer: server => {
-            const srcDir = faeConfig.srcDir;
             server.watcher.on('all', (event, path, stats) => {
-                debounce(() => watchRoutes(server, event, path, srcDir), 150)();
+                debounce(() => watchRoutes(event, path, srcDir), 150)();
                 watchers.forEach(fn => fn(event, path, stats));
             });
         }

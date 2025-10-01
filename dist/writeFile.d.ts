@@ -3,12 +3,12 @@ import { RouteManifest, AddFileOptions, MakePropertyOptional } from './core/type
 export declare function writePackageJson(root: string, description: string): void;
 /**写入tsconfig.json文件 */
 export declare function writeTsConfigJson(root: string, srcDir: string): void;
-/**写入faerc.ts文件 */
-export declare function writeFaercTs(root: string, srcDir: string): void;
 /**写入app.ts文件 */
 export declare function writeAppTs(root: string, srcDir: string): void;
 /**写入page.tsx文件 */
 export declare function writeIndexPageTsx(root: string, srcDir: string): void;
+/**写入vite.config.ts文件 */
+export declare function writeViteConfigTs(root: string): void;
 /**创建.fae/index.ts文件 */
 export declare function writeFaeIndexts(outDir: string, exports?: AddFileOptions[]): void;
 /**创建.fae/entry.tsx文件 */

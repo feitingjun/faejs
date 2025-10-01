@@ -1,43 +1,7 @@
-import { ProxyOptions, UserConfig, Plugin as VitePlugin } from 'vite'
+import { UserConfig } from 'vite'
 import { ComponentType, PropsWithChildren } from 'react'
 import { AppConfig } from '../app/types'
 import { Stats } from 'fs'
-
-/**项目.faerc.ts配置 */
-export interface FaeConfig {
-  /**开发服务器端口 */
-  port?: number
-  /**基础路径 */
-  base?: string
-  /**公共资源路径 */
-  publicDir?: string
-  /**src路径 */
-  srcDir?: string
-  /**输出路径 */
-  outDir?: string
-  /**import别名 */
-  alias?: Record<string, string>
-  /**开发服务器启动时是否自动打开浏览器 */
-  open?: boolean
-  /**chunk大小警告的限制 */
-  chunkSizeWarningLimit?: number
-  /**开发服务器代理 */
-  proxy?: Record<string, string | ProxyOptions>
-  /**faejs插件 */
-  plugins?: Plugin[]
-  /**是否启用model插件 */
-  model?: boolean
-  /**是否启用react-activation插件 */
-  reactActivation?: boolean
-  /**是否启用access插件 */
-  access?: boolean
-  /**是否启用atom插件 */
-  atom?: boolean
-  /**是否启用jotai插件 */
-  jotai?: boolean
-  /**是否启用keepAlive插件(仿react-activation自己的实现) */
-  keepAlive?: boolean
-}
 
 /**添加临时文件方法参数 */
 export interface AddFileOptions {
@@ -99,8 +63,7 @@ export interface PluginOptions {
 }
 
 /**插件 */
-export interface Plugin extends VitePlugin {
-  name: string
+export interface Plugin {
   setup?: (options: PluginOptions) => void
   runtime?: string
 }
@@ -145,3 +108,24 @@ export interface RuntimeOptions {
 
 /**插件运行时类型 */
 export type Runtime = (options: RuntimeOptions) => void
+
+/**fae插件配置 */
+export interface FaeConfig {
+  /**src路径 */
+  srcDir?: string
+  /**faejs插件 */
+  plugins?: Plugin[]
+  /**vite原生插件 */
+  /**是否启用model插件 */
+  model?: boolean
+  /**是否启用react-activation插件 */
+  reactActivation?: boolean
+  /**是否启用access插件 */
+  access?: boolean
+  /**是否启用atom插件 */
+  atom?: boolean
+  /**是否启用jotai插件 */
+  jotai?: boolean
+  /**是否启用keepAlive插件(仿react-activation自己的实现) */
+  keepAlive?: boolean
+}

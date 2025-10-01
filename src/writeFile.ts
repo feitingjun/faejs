@@ -35,15 +35,6 @@ export function writeTsConfigJson(root: string, srcDir: string) {
   })
 }
 
-/**写入faerc.ts文件 */
-export function writeFaercTs(root: string, srcDir: string) {
-  renderHbsTpl({
-    sourcePath: resolve(TML_DIR, '.faerc.ts.hbs'),
-    outPath: resolve(root, '.faerc.ts'),
-    data: { srcDir }
-  })
-}
-
 /**写入app.ts文件 */
 export function writeAppTs(root: string, srcDir: string) {
   renderHbsTpl({
@@ -57,6 +48,14 @@ export function writeIndexPageTsx(root: string, srcDir: string) {
   renderHbsTpl({
     sourcePath: resolve(TML_DIR, 'page.tsx.hbs'),
     outPath: resolve(root, srcDir, 'page.tsx')
+  })
+}
+
+/**写入vite.config.ts文件 */
+export function writeViteConfigTs(root: string) {
+  renderHbsTpl({
+    sourcePath: resolve(TML_DIR, 'vite.config.ts.hbs'),
+    outPath: resolve(root, 'vite.config.ts')
   })
 }
 
