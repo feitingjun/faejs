@@ -6,6 +6,7 @@ const configTml = (srcDir, outPath) => `
 import { defineConfig } from '@pandacss/dev'
 
 export default defineConfig({
+  preflight: true,
   include: ['./${srcDir}/**/*.{js,jsx,ts,tsx}'],
   exclude: ['./${srcDir}/.fae/**/*', 'node_modules'],
   jsxFramework: 'react',
