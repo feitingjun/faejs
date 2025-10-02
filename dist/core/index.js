@@ -293,7 +293,8 @@ export default function FaeCore(faeConfig = {}) {
                 build: {
                     rollupOptions: {
                         input: {
-                            fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
+                            fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx'),
+                            main: 'index.html'
                         }
                     }
                 }
