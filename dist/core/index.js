@@ -1,3 +1,4 @@
+import { mergeConfig } from 'vite';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, relative } from 'path';
 import { globSync } from 'glob';
@@ -124,6 +125,8 @@ async function loadPlugins(plugins, faeConfig) {
     const tailCodes = [];
     // 文件变更时触发的函数
     const watchers = [];
+    // vite配置
+    let viteConfig = {};
     const modifyUserConfig = fn => {
         faeConfig = fn(faeConfig);
     };
@@ -154,6 +157,9 @@ async function loadPlugins(plugins, faeConfig) {
     const addWatch = fn => {
         watchers.push(fn);
     };
+    const mergeViteConfig = (config) => {
+        viteConfig = mergeConfig(viteConfig, config);
+    };
     // 解析fae插件
     if (plugins && plugins.length > 0) {
         // 动态导入package.json
@@ -183,7 +189,8 @@ async function loadPlugins(plugins, faeConfig) {
                 addEntryImport,
                 addEntryCodeAhead,
                 addEntryCodeTail,
-                addWatch
+                addWatch,
+                mergeViteConfig
             });
         }
     }
@@ -195,7 +202,8 @@ async function loadPlugins(plugins, faeConfig) {
         aheadCodes,
         tailCodes,
         runtimes,
-        watchers
+        watchers,
+        viteConfig
     };
 }
 /**加载全局样式文件 */
@@ -255,7 +263,7 @@ export default function FaeCore(faeConfig = {}) {
                 plugins.push(keepAlivePlugin);
             if (pandacss)
                 plugins.push(pandacssPlugin);
-            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers } = await loadPlugins(plugins, faeConfig);
+            const { pageConfigTypes, appConfigTypes, exports, imports, aheadCodes, tailCodes, runtimes, watchers: pluginWatchers, viteConfig } = await loadPlugins(plugins, faeConfig);
             watchers = pluginWatchers;
             loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers });
             // 创建临时文件夹
@@ -274,7 +282,7 @@ export default function FaeCore(faeConfig = {}) {
                 }
             });
             // 返回的配置将与原有的配置深度合并
-            return {
+            return mergeConfig({
                 resolve: {
                     alias: {
                         '@': resolve(process.cwd(), srcDir.split('/')[0]),
@@ -289,7 +297,7 @@ export default function FaeCore(faeConfig = {}) {
                         }
                     }
                 }
-            };
+            }, viteConfig);
         },
         configureServer: server => {
             server.watcher.on('all', (event, path, stats) => {
@@ -299,4 +307,3 @@ export default function FaeCore(faeConfig = {}) {
         }
     };
 }
-//# sourceMappingURL=index.js.map

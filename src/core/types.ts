@@ -60,6 +60,8 @@ export interface PluginOptions {
   addEntryCodeTail: (code: string) => void
   /**文件变更时触发 */
   addWatch: (fn: PluginWatcher) => void
+  /**合并vite配置 */
+  mergeViteConfig: (config: UserConfig) => void
 }
 
 /**插件 */

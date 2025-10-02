@@ -1,6 +1,6 @@
 import { resolve, join } from 'path'
 import { existsSync } from 'fs'
-import { loadConfigAndCreateContext, codegen } from '@pandacss/node'
+import { loadConfigAndCreateContext, codegen, cssgen } from '@pandacss/node'
 import { definePlugin } from '../../core/define'
 
 const indexTml = `
@@ -34,10 +34,16 @@ const generate = async (
     }
   })
   await codegen(ctx)
+  return ctx
 }
 
 export default definePlugin({
-  setup: ({ context: { userConfig, srcDir }, addWatch, addFile }) => {
+  setup: async ({
+    context: { userConfig, srcDir },
+    addWatch,
+    addFile,
+    mergeViteConfig
+  }) => {
     let { pandacss } = userConfig
     if (!pandacss) return
     if (typeof pandacss === 'boolean') {
@@ -53,7 +59,7 @@ export default definePlugin({
       })
     }
     // 生成pandacss文件
-    generate(configPath, srcDir, outPath)
+    const ctx = await generate(configPath, srcDir, outPath)
     addWatch((event, path) => {
       // 配置文件变化时重新生成
       if (path === configPath && (event === 'add' || event === 'change')) {
@@ -63,6 +69,19 @@ export default definePlugin({
     addFile({
       content: indexTml,
       outPath: `${outPath}/index.ts`
+    })
+    mergeViteConfig({
+      plugins: [
+        {
+          name: 'fae-pandacss',
+          transform(code, id) {
+            if (id.endsWith('.css')) {
+              const css = ctx.getCss()
+              return { code: css, map: null }
+            }
+          }
+        }
+      ]
     })
   }
 })

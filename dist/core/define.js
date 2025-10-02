@@ -10,4 +10,3 @@ export function definePlugin(plugin) {
 export function defineRuntime(fn) {
     return fn;
 }
-//# sourceMappingURL=define.js.map

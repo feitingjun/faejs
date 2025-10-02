@@ -1,4 +1,4 @@
-import { PluginOption, UserConfig as ViteConfig } from 'vite'
+import { PluginOption, UserConfig as ViteConfig, mergeConfig } from 'vite'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { resolve, relative } from 'path'
 import { globSync } from 'glob'
@@ -154,6 +154,8 @@ async function loadPlugins(plugins: Plugin[], faeConfig: FaeConfig) {
   const tailCodes: string[] = []
   // 文件变更时触发的函数
   const watchers: PluginWatcher[] = []
+  // vite配置
+  let viteConfig: ViteConfig = {}
   const modifyUserConfig: PluginOptions['modifyUserConfig'] = fn => {
     faeConfig = fn(faeConfig)
   }
@@ -184,6 +186,11 @@ async function loadPlugins(plugins: Plugin[], faeConfig: FaeConfig) {
   const addWatch: PluginOptions['addWatch'] = fn => {
     watchers.push(fn)
   }
+  const mergeViteConfig: PluginOptions['mergeViteConfig'] = (
+    config: ViteConfig
+  ) => {
+    viteConfig = mergeConfig(viteConfig, config)
+  }
   // 解析fae插件
   if (plugins && plugins.length > 0) {
     // 动态导入package.json
@@ -212,7 +219,8 @@ async function loadPlugins(plugins: Plugin[], faeConfig: FaeConfig) {
         addEntryImport,
         addEntryCodeAhead,
         addEntryCodeTail,
-        addWatch
+        addWatch,
+        mergeViteConfig
       })
     }
   }
@@ -224,7 +232,8 @@ async function loadPlugins(plugins: Plugin[], faeConfig: FaeConfig) {
     aheadCodes,
     tailCodes,
     runtimes,
-    watchers
+    watchers,
+    viteConfig
   }
 }
 /**加载全局样式文件 */
@@ -312,7 +321,8 @@ export default function FaeCore(faeConfig: FaeConfig = {}): PluginOption {
         aheadCodes,
         tailCodes,
         runtimes,
-        watchers: pluginWatchers
+        watchers: pluginWatchers,
+        viteConfig
       } = await loadPlugins(plugins, faeConfig)
       watchers = pluginWatchers
       loadGlobalStyle(srcDir, { imports, aheadCodes, tailCodes, watchers })
@@ -332,22 +342,25 @@ export default function FaeCore(faeConfig: FaeConfig = {}): PluginOption {
         }
       })
       // 返回的配置将与原有的配置深度合并
-      return {
-        resolve: {
-          alias: {
-            '@': resolve(process.cwd(), srcDir.split('/')[0]),
-            fae: resolve(process.cwd(), srcDir, '.fae'),
-            '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
-          }
-        },
-        build: {
-          rollupOptions: {
-            input: {
-              fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
+      return mergeConfig(
+        {
+          resolve: {
+            alias: {
+              '@': resolve(process.cwd(), srcDir.split('/')[0]),
+              fae: resolve(process.cwd(), srcDir, '.fae'),
+              '/fae.tsx': resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
+            }
+          },
+          build: {
+            rollupOptions: {
+              input: {
+                fae: resolve(process.cwd(), srcDir, '.fae', 'entry.tsx')
+              }
             }
           }
-        }
-      }
+        },
+        viteConfig
+      )
     },
     configureServer: server => {
       server.watcher.on('all', (event, path, stats) => {

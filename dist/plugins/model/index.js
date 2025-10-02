@@ -36,4 +36,3 @@ export default definePlugin({
     },
     runtime: resolve(import.meta.dirname, 'runtime')
 });
-//# sourceMappingURL=index.js.map

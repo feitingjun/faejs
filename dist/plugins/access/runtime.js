@@ -46,4 +46,3 @@ export default defineRuntime(({ addProvider, addWrapper, appContext: { appConfig
         return isAuth ? children : NoAccess ? _jsx(NoAccess, {}) : _jsx(_Fragment, { children: "\u65E0\u6743\u9650" });
     });
 });
-//# sourceMappingURL=runtime.js.map

@@ -33,4 +33,3 @@ export default function AliveScope({ children }) {
                             return _jsx(Keeper, { name: v }, v);
                         })] })] }) }));
 }
-//# sourceMappingURL=aliveScope.js.map

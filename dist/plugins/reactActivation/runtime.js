@@ -71,4 +71,3 @@ export default defineRuntime(({ addProvider, addWrapper, appContext: { appConfig
             autoFreeze: false, children: children }));
     });
 });
-//# sourceMappingURL=runtime.js.map

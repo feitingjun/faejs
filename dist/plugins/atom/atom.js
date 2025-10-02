@@ -98,4 +98,3 @@ export function useAtomValue(atom) {
 export function useSetAtom(atom) {
     return atom.set;
 }
-//# sourceMappingURL=atom.js.map

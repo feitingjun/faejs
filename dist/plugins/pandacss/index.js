@@ -27,9 +27,10 @@ const generate = async (configPath, srcDir, outPath) => {
         }
     });
     await codegen(ctx);
+    return ctx;
 };
 export default definePlugin({
-    setup: ({ context: { userConfig, srcDir }, addWatch, addFile }) => {
+    setup: async ({ context: { userConfig, srcDir }, addWatch, addFile, mergeViteConfig }) => {
         let { pandacss } = userConfig;
         if (!pandacss)
             return;
@@ -45,7 +46,7 @@ export default definePlugin({
             });
         }
         // 生成pandacss文件
-        generate(configPath, srcDir, outPath);
+        const ctx = await generate(configPath, srcDir, outPath);
         addWatch((event, path) => {
             // 配置文件变化时重新生成
             if (path === configPath && (event === 'add' || event === 'change')) {
@@ -56,6 +57,18 @@ export default definePlugin({
             content: indexTml,
             outPath: `${outPath}/index.ts`
         });
+        mergeViteConfig({
+            plugins: [
+                {
+                    name: 'fae-pandacss',
+                    transform(code, id) {
+                        if (id.endsWith('.css')) {
+                            const css = ctx.getCss();
+                            return { code: css, map: null };
+                        }
+                    }
+                }
+            ]
+        });
     }
 });
-//# sourceMappingURL=index.js.map

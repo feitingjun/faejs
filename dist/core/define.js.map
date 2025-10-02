@@ -1,1 +1,0 @@
-{"version":3,"file":"define.js","sourceRoot":"","sources":["../../src/core/define.ts"],"names":[],"mappings":"AAEA,YAAY;AACZ,MAAM,UAAU,eAAe,CAAC,MAAiB;IAC/C,OAAO,MAAM,CAAA;AACf,CAAC;AAED,UAAU;AACV,MAAM,UAAU,YAAY,CAC1B,MAAS;IAET,OAAO,MAAM,CAAA;AACf,CAAC;AAED,aAAa;AACb,MAAM,UAAU,aAAa,CAAC,EAAW;IACvC,OAAO,EAAE,CAAA;AACX,CAAC"}
