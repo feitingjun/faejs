@@ -15,7 +15,7 @@ export default defineConfig({
   include: ['./${srcDir}/**/*.{js,jsx,ts,tsx}'],
   exclude: ['./${srcDir}/.fae/**/*', 'node_modules'],
   jsxFramework: 'react',
-  outdir: ${outPath}
+  outdir: '${outPath}'
 })
 `.trim();
 const postcssTml = `
